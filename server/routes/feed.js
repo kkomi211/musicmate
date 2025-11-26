@@ -133,18 +133,29 @@ router.get("/bookmark/:feedNo/:userId", async (req, res) => {
 router.get("/comment/:feedNo", async (req, res) => {
     let { feedNo } = req.params;
     try {
-        let sql = "SELECT * FROM FEED_COMMENT WHERE FEEDNO = ?";
+        // [수정] FEED_COMMENT(C)와 USER(U) 테이블을 조인하여 NICKNAME을 가져옵니다.
+        let sql = `
+            SELECT C.*, U.NICKNAME 
+            FROM FEED_COMMENT C
+            LEFT JOIN USER U ON C.USERID = U.USERID
+            WHERE C.FEEDNO = ?
+            ORDER BY C.CDATE ASC
+        `;
         let [list] = await db.query(sql, [feedNo]);
 
+        let imgSql = "SELECT * FROM FEED_IMG WHERE FEEDNO = ?";
+        let [imgList] = await db.query(imgSql, [feedNo]);
+
         res.json({
-            list : list,
+            list: list,
+            imgList: imgList,
             result: "success"
-        })
+        });
     } catch (error) {
         console.log(error);
-
+        res.status(500).json({ result: "fail" });
     }
-})
+});
 
 router.post("/comment", async (req, res) => {
     let { feedNo, userId, content } = req.body;
@@ -162,6 +173,22 @@ router.post("/comment", async (req, res) => {
     }
 })
 
+router.delete("/comment/:commentNo", async (req, res) => {
+    let { commentNo } = req.params;
+    try {
+        let sql = "DELETE FROM FEED_COMMENT WHERE COMMENTNO = ?";
+        let result = await db.query(sql, [commentNo]);
+
+        res.json({
+            result : result,
+            msg: "댓글 삭제 성공"
+        })
+    } catch (error) {
+        console.log(error);
+
+    }
+})
+
 router.get("/:userId/:feedCount", async (req, res) => {
     let { feedCount, userId } = req.params;
     let limit = parseInt(feedCount);
@@ -170,11 +197,13 @@ router.get("/:userId/:feedCount", async (req, res) => {
         let sql = `
             SELECT 
                 F.*, 
+                ANY_VALUE(U.NICKNAME) AS NICKNAME, -- [추가] 닉네임 가져오기
                 ANY_VALUE(I.IMGPATH) AS IMGPATH, 
                 COUNT(DISTINCT L.LIKENO) AS LIKE_COUNT,
                 COUNT(DISTINCT CASE WHEN L.USERID = ? THEN 1 END) AS MY_LIKE,
                 COUNT(DISTINCT B.BOOKMARKNO) AS MY_BOOKMARK 
             FROM FEED F 
+            LEFT JOIN USER U ON F.USERID = U.USERID -- [추가] 유저 테이블 조인
             LEFT JOIN FEED_IMG I ON F.FEEDNO = I.FEEDNO AND I.IMGTYPE = 'M' 
             LEFT JOIN FEED_LIKE L ON F.FEEDNO = L.FEEDNO 
             LEFT JOIN BOOKMARK B ON F.FEEDNO = B.FEEDNO AND B.USERID = ?
@@ -187,7 +216,7 @@ router.get("/:userId/:feedCount", async (req, res) => {
             LIMIT ? OFFSET 0
         `;
 
-        // 파라미터 순서: [MY_LIKE용 userId, WHERE절 userId, WHERE절 userId, LIMIT 숫자]
+        // 파라미터 순서: [MY_LIKE용 userId, MY_BOOKMARK용 userId, WHERE절 userId, SUBQUERY userId, LIMIT 숫자]
         let [list] = await db.query(sql, [userId, userId, userId, userId, limit]);
 
         res.json({ list: list, result: "success" });

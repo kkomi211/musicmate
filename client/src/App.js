@@ -8,7 +8,7 @@ import IdPwdSearch from './components/IdPwdSearch';
 import Feed from './components/Feed';
 import FeedHeader from './components/FeedHeader';
 import FeedAdd from './components/FeedAdd';
-import FeedView from './components/FeedView';
+import PersonalFeed from './components/PersonalFeed';
 
 function App() {
   const location = useLocation();
@@ -17,7 +17,7 @@ function App() {
   const isAuthPage = location.pathname === '/login' || location.pathname === '/join' || location.pathname === '/findId';
   
   // 피드 페이지 확인
-  const isFeedPage = location.pathname === '/feed' || location.pathname === '/feedAdd' || location.pathname === '/feedView';
+  const isFeedPage = location.pathname === '/feed' || location.pathname === '/feedAdd' || location.pathname === '/personalFeed';
 
   return (
     // flexDirection: 'column'을 추가하여 헤더와 본문을 수직으로 배치
@@ -45,7 +45,7 @@ function App() {
           <Route path="/findId" element={<IdPwdSearch />} />
           <Route path="/feed" element={<Feed />} />
           <Route path="/feedAdd" element={<FeedAdd />} />
-          <Route path="/feedView" element={<FeedView />} />
+          <Route path="/personalFeed" element={<PersonalFeed />} />
         </Routes>
       </Box>
     </Box>
