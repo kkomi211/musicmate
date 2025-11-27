@@ -5,6 +5,10 @@ const cors = require('cors')
 // const productRouter = require("./routes/product");
 const userRouter = require("./routes/user");
 const feedRouter = require("./routes/feed");
+const messageRouter = require("./routes/message");
+const dealRouter = require("./routes/deal");
+const bandRouter = require("./routes/band");
+const eventRouter = require("./routes/event");
 const path = require("path");
 
 
@@ -21,6 +25,10 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // app.use("/product", productRouter );
 app.use("/user", userRouter );
 app.use("/feed", feedRouter );
+app.use("/message", messageRouter );
+app.use("/deal", dealRouter );
+app.use("/band", bandRouter );
+app.use("/event", eventRouter );
 
 
 

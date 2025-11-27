@@ -71,6 +71,8 @@ function FeedAdd() {
                 borderRadius: 2,
                 boxShadow: 3,
                 backgroundColor: 'white', // 배경색은 흰색으로 유지
+                mx: 'auto',
+                width : '80%'
             }}> {/* 스크롤 테스트를 위해 최소 높이 설정 */}
             <Typography component="h1" variant="h5" gutterBottom>
                 피드 작성

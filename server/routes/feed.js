@@ -78,6 +78,139 @@ router.get("/:userId", async (req, res) => {
     }
 })
 
+
+
+router.get("/follower/:userId", async (req, res) => {
+    let { userId } = req.params;
+    try {
+        // FOLLOW 테이블에서 FOLLOWINGID가 '나(userId)'인 사람들을 찾고,
+        // 그 사람들의 정보(USERID, NICKNAME)와 프로필 사진을 가져옵니다.
+        let sql = `
+            SELECT 
+                U.USERID, 
+                U.NICKNAME,
+                (SELECT IMGPATH 
+                 FROM FEED_IMG 
+                 WHERE USERID = U.USERID AND IMGTYPE = 'P' 
+                 ORDER BY CDATE DESC LIMIT 1) AS IMGPATH
+            FROM FOLLOW F
+            INNER JOIN USER U ON F.FOLLOWID = U.USERID
+            WHERE F.FOLLOWINGID = ?
+        `;
+        
+        let [list] = await db.query(sql, [userId]);
+        
+        res.json({
+            list: list,
+            result: "success"
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ result: "fail" });
+    }
+});
+
+// 2. 내가 팔로우하는 사람 목록 (팔로잉)
+router.get("/following/:userId", async (req, res) => {
+    let { userId } = req.params;
+    try {
+        // FOLLOW 테이블에서 FOLLOWID가 '나(userId)'인 데이터를 찾고,
+        // 내가 팔로우한 상대방(FOLLOWINGID)의 정보를 가져옵니다.
+        let sql = `
+            SELECT 
+                U.USERID, 
+                U.NICKNAME,
+                (SELECT IMGPATH 
+                 FROM FEED_IMG 
+                 WHERE USERID = U.USERID AND IMGTYPE = 'P' 
+                 ORDER BY CDATE DESC LIMIT 1) AS IMGPATH
+            FROM FOLLOW F
+            INNER JOIN USER U ON F.FOLLOWINGID = U.USERID
+            WHERE F.FOLLOWID = ?
+        `;
+        
+        let [list] = await db.query(sql, [userId]);
+        
+        res.json({
+            list: list,
+            result: "success"
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ result: "fail" });
+    }
+});
+
+router.get("/personal/:userId", async (req, res) => {
+    let { userId } = req.params;
+    try {
+        let sql = `
+            SELECT 
+                U.*,
+                (SELECT IMGPATH FROM FEED_IMG WHERE USERID = U.USERID AND IMGTYPE = 'P') AS IMGPATH,
+                
+                (SELECT COUNT(*) FROM FEED WHERE USERID = U.USERID) AS POST_COUNT, 
+                (SELECT COUNT(*) FROM FOLLOW WHERE FOLLOWINGID = U.USERID) AS FOLLOWER_COUNT, 
+                (SELECT COUNT(*) FROM FOLLOW WHERE FOLLOWID = U.USERID) AS FOLLOWING_COUNT 
+            FROM USER U 
+            WHERE U.USERID = ?
+        `;
+
+        let [list] = await db.query(sql, [userId]);
+        
+        res.json({
+            list: list,
+            result: "success"
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ result: "fail" });
+    }
+});
+
+router.put('/user/update', upload.single('file'), async (req, res) => {
+    const { userId, nickname, instrument } = req.body;
+    const file = req.file; // 업로드된 파일 객체
+
+    try {
+        // 1. 텍스트 정보(닉네임, 악기) 수정 - USER 테이블 업데이트
+        // INSTRUMENT 컬럼이 USER 테이블에 있다고 가정
+        let updateUserSql = "UPDATE USER SET NICKNAME = ?, INSTRUMENT = ?, UDATE = NOW() WHERE USERID = ?";
+        await db.query(updateUserSql, [nickname, instrument, userId]);
+
+        // 2. 파일이 전송된 경우 - 프로필 이미지 저장 (FEED_IMG 테이블)
+        if (file) {
+            let host = `${req.protocol}://${req.get("host")}/`;
+            let filename = file.filename;
+            let destination = host + file.destination + file.filename; // 이미지 접근 URL
+
+            // [변경] 프로필 사진이 이미 있는지 확인
+            let checkSql = "SELECT IMGNO FROM FEED_IMG WHERE USERID = ? AND IMGTYPE = 'P'";
+            let [rows] = await db.query(checkSql, [userId]);
+
+            if (rows.length > 0) {
+                // 이미 있으면 UPDATE
+                let updateImgSql = "UPDATE FEED_IMG SET IMGNAME = ?, IMGPATH = ?, UDATE = NOW() WHERE USERID = ? AND IMGTYPE = 'P'";
+                await db.query(updateImgSql, [filename, destination, userId]);
+            } else {
+                // 없으면 INSERT
+                // IMGTYPE = 'P' (프로필)로 저장, FEEDNO는 NULL
+                let insertImgSql = "INSERT INTO FEED_IMG(FEEDNO, IMGNAME, IMGPATH, CDATE, UDATE, IMGTYPE, USERID) VALUES(NULL, ?, ?, NOW(), NOW(), 'P', ?)";
+                await db.query(insertImgSql, [filename, destination, userId]);
+            }
+        }
+
+        res.json({
+            result: "success",
+            msg: "프로필이 수정되었습니다."
+        });
+
+    } catch (error) {
+        console.error("프로필 수정 중 오류 발생:", error);
+        res.status(500).json({ result: "fail", msg: "Server Error" });
+    }
+});
+
 router.get("/like/:feedNo/:userId", async (req, res) => {
 
     let { feedNo, userId } = req.params;
@@ -226,6 +359,141 @@ router.get("/:userId/:feedCount", async (req, res) => {
     }
 });
 
+router.get("/personal/:userId/:feedCount", async (req, res) => {
+    let { feedCount, userId } = req.params;
+    let limit = parseInt(feedCount);
+
+    try {
+        let sql = `
+            SELECT 
+                F.*, 
+                ANY_VALUE(U.NICKNAME) AS NICKNAME, 
+                ANY_VALUE(I.IMGPATH) AS IMGPATH, 
+                COUNT(DISTINCT L.LIKENO) AS LIKE_COUNT,
+                COUNT(DISTINCT CASE WHEN L.USERID = ? THEN 1 END) AS MY_LIKE,
+                COUNT(DISTINCT B.BOOKMARKNO) AS MY_BOOKMARK 
+            FROM FEED F 
+            LEFT JOIN USER U ON F.USERID = U.USERID 
+            LEFT JOIN FEED_IMG I ON F.FEEDNO = I.FEEDNO AND I.IMGTYPE = 'M' 
+            LEFT JOIN FEED_LIKE L ON F.FEEDNO = L.FEEDNO 
+            LEFT JOIN BOOKMARK B ON F.FEEDNO = B.FEEDNO AND B.USERID = ?
+            WHERE F.USERID = ?  -- [수정] 팔로잉 조건 삭제하고 이 조건만 남김
+            GROUP BY F.FEEDNO
+            ORDER BY F.CDATE DESC 
+            LIMIT ? OFFSET 0
+        `;
+
+        // [수정] 쿼리에서 ? 개수가 줄었으므로 파라미터도 4개로 줄입니다.
+        // 순서: [MY_LIKE용, MY_BOOKMARK용, WHERE절(작성자), LIMIT]
+        let [list] = await db.query(sql, [userId, userId, userId, limit]);
+
+        res.json({ list: list, result: "success" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ result: "fail" });
+    }
+});
+
+router.get("/checkFollow/:myId/:targetId", async (req, res) => {
+    let { myId, targetId } = req.params;
+    try {
+        let sql = "SELECT COUNT(*) AS cnt FROM FOLLOW WHERE FOLLOWID = ? AND FOLLOWINGID = ?";
+        let [rows] = await db.query(sql, [myId, targetId]);
+        
+        // cnt가 0보다 크면 팔로우 중(true), 아니면 false
+        let isFollowing = rows[0].cnt > 0;
+        
+        res.json({
+            result: "success",
+            isFollowing: isFollowing
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ result: "fail" });
+    }
+});
+
+router.get("/bookmark/list/:userId/:feedCount", async (req, res) => {
+    let { userId, feedCount } = req.params;
+    let limit = parseInt(feedCount);
+
+    try {
+        let sql = `
+            SELECT 
+                F.*, 
+                ANY_VALUE(U.NICKNAME) AS NICKNAME, 
+                ANY_VALUE(I.IMGPATH) AS IMGPATH, 
+                COUNT(DISTINCT L.LIKENO) AS LIKE_COUNT,
+                COUNT(DISTINCT CASE WHEN L.USERID = ? THEN 1 END) AS MY_LIKE,
+                -- 북마크 리스트이므로 MY_BOOKMARK는 무조건 1(true)로 설정하거나 계산
+                1 AS MY_BOOKMARK
+            FROM FEED F 
+            -- [핵심] BOOKMARK 테이블과 INNER JOIN하여 내가 북마크한 글만 필터링
+            INNER JOIN BOOKMARK B_MAIN ON F.FEEDNO = B_MAIN.FEEDNO AND B_MAIN.USERID = ? 
+            LEFT JOIN USER U ON F.USERID = U.USERID 
+            LEFT JOIN FEED_IMG I ON F.FEEDNO = I.FEEDNO AND I.IMGTYPE = 'M' 
+            LEFT JOIN FEED_LIKE L ON F.FEEDNO = L.FEEDNO 
+            GROUP BY F.FEEDNO
+            ORDER BY ANY_VALUE(B_MAIN.CDATE) DESC -- [수정] 정렬 기준 컬럼도 ANY_VALUE()로 감싸줌
+            LIMIT ? OFFSET 0
+        `;
+
+        // 파라미터 순서: [MY_LIKE확인용UserId, 북마크필터링UserId, LIMIT]
+        let [list] = await db.query(sql, [userId, userId, limit]);
+
+        res.json({ list: list, result: "success" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ result: "fail" });
+    }
+});
+
+// 2. 팔로우 토글(추가/삭제) API
+router.post("/follow", async (req, res) => {
+    let { myId, targetId } = req.body;
+    try {
+        // 이미 팔로우 중인지 확인
+        let checkSql = "SELECT COUNT(*) AS cnt FROM FOLLOW WHERE FOLLOWID = ? AND FOLLOWINGID = ?";
+        let [rows] = await db.query(checkSql, [myId, targetId]);
+
+        if (rows[0].cnt > 0) {
+            // 이미 팔로우 중이면 -> 언팔로우(삭제)
+            let deleteSql = "DELETE FROM FOLLOW WHERE FOLLOWID = ? AND FOLLOWINGID = ?";
+            await db.query(deleteSql, [myId, targetId]);
+            res.json({ result: "success", status: "unfollowed" });
+        } else {
+            // 팔로우 안한 상태면 -> 팔로우(추가)
+            let insertSql = "INSERT INTO FOLLOW(FOLLOWID, FOLLOWINGID, CDATE) VALUES(?, ?, NOW())";
+            await db.query(insertSql, [myId, targetId]);
+            res.json({ result: "success", status: "followed" });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ result: "fail" });
+    }
+});
+
+router.get("/message/inbox/:userId", async (req, res) => {
+    let { userId } = req.params;
+    try {
+        let sql = `
+            SELECT DISTINCT 
+                U.USERID, U.NICKNAME,
+                (SELECT IMGPATH FROM FEED_IMG WHERE USERID = U.USERID AND IMGTYPE = 'P' ORDER BY CDATE DESC LIMIT 1) AS IMGPATH
+            FROM MESSAGE M
+            INNER JOIN USER U 
+                ON (M.SENDERID = U.USERID OR M.RECEIVERID = U.USERID)
+            WHERE (M.SENDERID = ? OR M.RECEIVERID = ?) 
+              AND U.USERID != ?
+        `;
+        
+        let [list] = await db.query(sql, [userId, userId, userId]);
+        res.json({ list: list, result: "success" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ result: "fail" });
+    }
+});
 
 
 router.post("/", async (req, res) => {
