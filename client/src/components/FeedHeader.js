@@ -1,13 +1,43 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Button, Stack, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 // 아이콘
 import PersonIcon from '@mui/icons-material/Person';
 import SendIcon from '@mui/icons-material/Send';
+import HomeIcon from '@mui/icons-material/Home'; // [추가] 홈 아이콘
+
+// JWT 디코딩 헬퍼
+function decodeToken(token) {
+    try {
+        if (!token) return null;
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (error) {
+        return null;
+    }
+}
 
 function FeedHeader() {
     const navigate = useNavigate();
+
+    // [추가] 내 정보 State
+    const [myUserId, setMyUserId] = useState("");
+    const [myNickname, setMyNickname] = useState("");
+
+    // 토큰에서 내 ID와 닉네임을 가져오는 로직
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (token) {
+            const decoded = decodeToken(token);
+            if (decoded) {
+                setMyUserId(decoded.userId);
+                setMyNickname(decoded.nickname || decoded.userId);
+            }
+        }
+    }, []);
 
     // 공통 버튼 스타일 정의
     const gradientButtonStyle = {
@@ -22,6 +52,16 @@ function FeedHeader() {
             background: 'linear-gradient(45deg, #b71c1c 30%, #ff7043 90%)',
             boxShadow: '0 4px 6px 2px rgba(255, 105, 135, .4)',
         },
+    };
+
+    const handleGoToMyFeed = () => {
+        if (!myUserId) {
+            alert("로그인이 필요합니다.");
+            navigate("/login");
+            return;
+        }
+        // [수정] 내 개인 피드로 이동
+        navigate("/personalFeed", { state: { targetUserId: myUserId, targetNickname: myNickname } });
     };
 
     return (
@@ -40,11 +80,32 @@ function FeedHeader() {
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     alignItems: 'center', 
-                    mb: 2 // 이미지와의 간격 조금 더 띄움
+                    mb: 2
                 }}
             >
-                {/* 왼쪽 여백용 Box */}
-                <Box sx={{ width: '30%', textAlign: 'left' }}></Box> 
+                {/* [수정] 왼쪽: 내 피드 버튼 */}
+                <Box sx={{ width: '30%', textAlign: 'left' }}>
+                    {myUserId && (
+                        <Button
+                            size="small"
+                            startIcon={<HomeIcon />}
+                            onClick={handleGoToMyFeed}
+                            sx={{
+                                color: '#d32f2f',
+                                border: '1px solid #ff8a65',
+                                borderRadius: '20px',
+                                textTransform: 'none',
+                                fontWeight: 'bold',
+                                '&:hover': {
+                                    backgroundColor: '#fff5f5',
+                                    border: '1px solid #d32f2f',
+                                }
+                            }}
+                        >
+                            내 피드
+                        </Button>
+                    )}
+                </Box> 
                 
                 {/* 중앙 로고 */}
                 <Typography
@@ -79,8 +140,8 @@ function FeedHeader() {
                         sx={{ 
                             ...gradientButtonStyle, 
                             fontSize: '0.75rem', 
-                            px: 2, // 좌우 패딩
-                            background: 'white', // 상단 버튼은 배경 흰색 + 글씨 그라데이션 효과로 차별화
+                            px: 2,
+                            background: 'white',
                             color: '#d32f2f',
                             border: '1px solid #ff8a65',
                             boxShadow: 'none',
@@ -98,7 +159,7 @@ function FeedHeader() {
                         startIcon={<SendIcon />}
                         sx={{ 
                             ...gradientButtonStyle, 
-                            fontSize: '0.75rem', 
+                            fontSize: '0.75rem',
                             px: 2,
                             background: 'white',
                             color: '#d32f2f',
@@ -109,7 +170,6 @@ function FeedHeader() {
                                 border: '1px solid #d32f2f',
                             }
                         }}
-                        // [수정] 메시지 목록 페이지로 이동
                         onClick={()=>{navigate("/message")}}
                     >
                         메시지

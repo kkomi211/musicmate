@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { 
-    Box, Typography, Avatar, IconButton, TextField, Paper, Stack, Button
+    Box, Typography, Avatar, Button, IconButton, Paper, Stack, Divider,
+    TextField
 } from "@mui/material";
 
 // 아이콘
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import SendIcon from '@mui/icons-material/Send';
+import CloseIcon from '@mui/icons-material/Close';
 
 // JWT 디코딩 헬퍼 함수
 function decodeToken(token) {
@@ -111,6 +113,16 @@ function Message() {
         .catch(err => console.error("Send error:", err));
     };
 
+    // 5. [추가] 닉네임 클릭 시 개인 피드 이동 핸들러
+    const handleGoToPersonalFeed = () => {
+        navigate("/personalFeed", { 
+            state: { 
+                targetUserId: targetUserId, 
+                targetNickname: targetInfo.nickname || targetUserId 
+            } 
+        });
+    };
+
     return (
         <Box sx={{ width: '80%', height: '100vh', backgroundColor: '#f5f5f5', display: 'flex', flexDirection: 'column', mx: 'auto' }}>
             
@@ -120,7 +132,14 @@ function Message() {
                     <ArrowBackIosNewIcon />
                 </IconButton>
                 <Avatar src={targetInfo.profileImg} sx={{ width: 40, height: 40, mr: 1.5 }} />
-                <Typography variant="h6" fontWeight="bold">
+                
+                {/* [수정] 닉네임 클릭 시 개인 피드로 이동 */}
+                <Typography 
+                    variant="h6" 
+                    fontWeight="bold"
+                    sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                    onClick={handleGoToPersonalFeed}
+                >
                     {targetInfo.nickname || targetUserId}
                 </Typography>
             </Paper>
@@ -130,6 +149,11 @@ function Message() {
                 {messages.length > 0 ? (
                     messages.map((msg, index) => {
                         const isMe = msg.SENDERID === myUserId; // 내가 보낸 메시지인지 확인
+                        
+                        // DB에 CDATE가 DATE 객체나 유효한 문자열로 들어온다고 가정
+                        const messageDate = new Date(msg.CDATE);
+                        const timeString = isNaN(messageDate) ? '' : messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
                         return (
                             <Box 
                                 key={index} 
@@ -159,7 +183,7 @@ function Message() {
                                     </Paper>
                                     {/* 시간 표시 */}
                                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: isMe ? 'right' : 'left', mt: 0.5, px: 1 }}>
-                                        {new Date(msg.CDATE).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {timeString}
                                     </Typography>
                                 </Box>
                             </Box>

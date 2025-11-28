@@ -3,6 +3,9 @@ const router = express.Router();
 const db = require("../db")
 const authmiddlewarer = require("../auth");
 const multer = require("multer");
+const jwt = require('jsonwebtoken');
+
+const JWT_KEY = "server_secret_key"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
@@ -64,8 +67,8 @@ router.get("/:userId", async (req, res) => {
     let { userId } = req.params;
     try {
         let sql = "SELECT * "
-            + "FROM TBL_FEED F "
-            + "INNER JOIN TBL_FEED_IMG I ON F.ID = I.FEEDID "
+            + "FROM FEED F "
+            + "INNER JOIN FEED_IMG I ON F.FEEDNO = I.FEEDNO "
             + "WHERE F.USERID = ?";
         let [list] = await db.query(sql, [userId]);
         res.json({
@@ -97,9 +100,9 @@ router.get("/follower/:userId", async (req, res) => {
             INNER JOIN USER U ON F.FOLLOWID = U.USERID
             WHERE F.FOLLOWINGID = ?
         `;
-        
+
         let [list] = await db.query(sql, [userId]);
-        
+
         res.json({
             list: list,
             result: "success"
@@ -128,9 +131,9 @@ router.get("/following/:userId", async (req, res) => {
             INNER JOIN USER U ON F.FOLLOWINGID = U.USERID
             WHERE F.FOLLOWID = ?
         `;
-        
+
         let [list] = await db.query(sql, [userId]);
-        
+
         res.json({
             list: list,
             result: "success"
@@ -157,7 +160,7 @@ router.get("/personal/:userId", async (req, res) => {
         `;
 
         let [list] = await db.query(sql, [userId]);
-        
+
         res.json({
             list: list,
             result: "success"
@@ -200,9 +203,20 @@ router.put('/user/update', upload.single('file'), async (req, res) => {
             }
         }
 
+        let selectSql = "SELECT * FROM USER WHERE USERID = ?"
+        let [list] = await db.query(selectSql, [userId]);
+        let user = {
+            userId: list[0].USERID,
+            name: list[0].NAME,
+            nickname: list[0].NICKNAME,
+            auth: list[0].AUTH
+        }
+        token = jwt.sign(user, JWT_KEY, { expiresIn: '1h' });
+
         res.json({
             result: "success",
-            msg: "프로필이 수정되었습니다."
+            msg: "프로필이 수정되었습니다.",
+            token: token
         });
 
     } catch (error) {
@@ -297,8 +311,8 @@ router.post("/comment", async (req, res) => {
         let result = await db.query(sql, [feedNo, content, userId]);
 
         res.json({
-            result : result,
-            result: "댓글 작성 성공"
+            result: result,
+            msg: "댓글 작성 성공"
         })
     } catch (error) {
         console.log(error);
@@ -313,7 +327,7 @@ router.delete("/comment/:commentNo", async (req, res) => {
         let result = await db.query(sql, [commentNo]);
 
         res.json({
-            result : result,
+            result: result,
             msg: "댓글 삭제 성공"
         })
     } catch (error) {
@@ -399,10 +413,10 @@ router.get("/checkFollow/:myId/:targetId", async (req, res) => {
     try {
         let sql = "SELECT COUNT(*) AS cnt FROM FOLLOW WHERE FOLLOWID = ? AND FOLLOWINGID = ?";
         let [rows] = await db.query(sql, [myId, targetId]);
-        
+
         // cnt가 0보다 크면 팔로우 중(true), 아니면 false
         let isFollowing = rows[0].cnt > 0;
-        
+
         res.json({
             result: "success",
             isFollowing: isFollowing
@@ -486,7 +500,7 @@ router.get("/message/inbox/:userId", async (req, res) => {
             WHERE (M.SENDERID = ? OR M.RECEIVERID = ?) 
               AND U.USERID != ?
         `;
-        
+
         let [list] = await db.query(sql, [userId, userId, userId]);
         res.json({ list: list, result: "success" });
     } catch (error) {
@@ -495,6 +509,66 @@ router.get("/message/inbox/:userId", async (req, res) => {
     }
 });
 
+router.post("/search", async (req, res) => {
+    // req.body에서 검색 파라미터를 읽어옵니다.
+    const { q: searchTerm, type: searchType, userId: myUserId } = req.body;
+
+    // console.log("실행"); // 디버깅 로그는 필요시 주석 해제
+
+    // 안전을 위해 검색어를 대소문자 구분 없이 사용할 수 있도록 처리
+    const searchPattern = `%${searchTerm}%`;
+
+    let results = { users: [], feeds: [] };
+
+    try {
+        if (searchType === 'user' || searchType === 'all') {
+            // --- 사용자 검색 (USERID 및 NICKNAME 동시 검색) ---
+            let userSql = `
+                SELECT 
+                    U.USERID, 
+                    U.NICKNAME,
+                    (SELECT IMGPATH 
+                     FROM FEED_IMG 
+                     WHERE USERID = U.USERID AND IMGTYPE = 'P' 
+                     ORDER BY CDATE DESC LIMIT 1) AS IMGPATH
+                FROM USER U
+                WHERE U.USERID LIKE ? OR U.NICKNAME LIKE ?
+                LIMIT 10
+            `;
+            let [userList] = await db.query(userSql, [searchPattern, searchPattern]);
+            results.users = userList;
+        }
+
+        if (searchType === 'feed' || searchType === 'all') {
+            // --- 피드 검색 (CONTENT 검색) ---
+            let feedSql = `
+                SELECT 
+                    F.FEEDNO, F.CONTENT, F.CDATE, F.USERID,
+                    ANY_VALUE(U.NICKNAME) AS NICKNAME,
+                    (SELECT IMGPATH FROM FEED_IMG WHERE FEEDNO = F.FEEDNO AND IMGTYPE = 'M' LIMIT 1) AS IMGPATH,
+                    COUNT(DISTINCT L.LIKENO) AS LIKE_COUNT,
+                    COUNT(DISTINCT CASE WHEN L.USERID = ? THEN 1 END) AS MY_LIKE
+                FROM FEED F
+                INNER JOIN USER U ON F.USERID = U.USERID
+                LEFT JOIN FEED_LIKE L ON F.FEEDNO = L.FEEDNO
+                WHERE F.CONTENT LIKE ? 
+                GROUP BY F.FEEDNO
+                ORDER BY F.CDATE DESC
+                LIMIT 10
+            `;
+            // NOTE: 피드 검색 시 내가 좋아요 눌렀는지 확인하기 위해 myUserId 필요
+            let [feedList] = await db.query(feedSql, [myUserId, searchPattern]);
+            results.feeds = feedList;
+        }
+
+        // 최종 결과 반환
+        res.json({ result: "success", ...results });
+
+    } catch (error) {
+        console.error("통합 검색 오류:", error);
+        res.status(500).json({ result: "fail", msg: "Server Error" });
+    }
+});
 
 router.post("/", async (req, res) => {
     console.log(req.body);

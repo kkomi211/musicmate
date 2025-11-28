@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
     Box, Typography, Fab, Button, Card, CardContent, CardMedia, CardActions, IconButton,
@@ -17,6 +17,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import SearchIcon from '@mui/icons-material/Search'; // [추가] 검색 아이콘
 
 // JWT 디코딩 헬퍼 함수
 function decodeToken(token) {
@@ -108,6 +109,7 @@ function Feed() {
     const handleAddComment = () => {
         const content = commentRef.current.value;
         if(!content) return;
+        
 
         fetch('http://localhost:3010/feed/comment', {
             method: 'POST',
@@ -153,6 +155,11 @@ function Feed() {
         getFeeds(userId, nextCount);
     };
 
+    // [추가] 검색 페이지 이동 핸들러
+    const handleGoToSearch = () => {
+        navigate("/search"); // 검색 페이지 경로 (App.js에 라우트 설정 필요)
+    };
+
     return (
         <Box sx={{
             p: 4, marginTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -183,7 +190,7 @@ function Feed() {
                                             navigate("/personalFeed", { 
                                                 state: { 
                                                     targetUserId: item.USERID, 
-                                                    targetNickname: item.NICKNAME 
+                                                    targetNickname: item.NICKNAME
                                                 } 
                                             });
                                         }}
@@ -269,54 +276,52 @@ function Feed() {
                                             <IconButton edge="end" size="small" onClick={() => handleDeleteComment(comment.COMMENTNO)}><CloseIcon fontSize="small" /></IconButton>
                                         )}>
                                         <ListItemText 
-                                            // [수정] 댓글 닉네임 클릭 시 개인 피드로 이동
                                             primary={
                                                 <Typography 
-                                                    variant="subtitle2" 
-                                                    component="span" 
-                                                    sx={{ fontWeight: 'bold', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                                                    variant="subtitle2" component="span" sx={{ fontWeight: 'bold', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
                                                     onClick={() => {
-                                                        navigate("/personalFeed", { 
-                                                            state: { 
-                                                                targetUserId: comment.USERID, 
-                                                                targetNickname: comment.NICKNAME || comment.USERID 
-                                                            } 
-                                                        });
-                                                        // 모달 닫고 싶으면 handleCloseModal() 호출, 아니면 유지
                                                         handleCloseModal();
+                                                        navigate("/personalFeed", { state: { targetUserId: comment.USERID, targetNickname: comment.NICKNAME || comment.USERID } });
                                                     }}
                                                 >
                                                     {comment.NICKNAME || comment.USERID}
                                                 </Typography>
                                             } 
-                                            secondary={
-                                                <>
-                                                    <Typography component="span" variant="body2" color="text.primary">{comment.CONTENT}</Typography>
-                                                    <br />
-                                                    <Typography component="span" variant="caption" color="text.secondary">{new Date(comment.CDATE).toLocaleDateString()}</Typography>
-                                                </>
-                                            } 
-                                        />
+                                            secondary={<><Typography component="span" variant="body2" color="text.primary">{comment.CONTENT}</Typography><br /><Typography component="span" variant="caption" color="text.secondary">{new Date(comment.CDATE).toLocaleDateString()}</Typography></>} 
+                                            primaryTypographyProps={{ fontWeight: 'bold' }} />
                                     </ListItem>
                                 ))}
                             </List>
                         </DialogContent>
-
                         <DialogActions sx={{ p: 2 }}>
-                            <TextField
-                                fullWidth size="small" placeholder="댓글 달기..." inputRef={commentRef}
-                                InputProps={{ endAdornment: (<IconButton onClick={handleAddComment}><SendIcon color="primary" /></IconButton>) }}
-                                onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }}
-                            />
+                            <TextField fullWidth size="small" placeholder="댓글 달기..." inputRef={commentRef} InputProps={{ endAdornment: (<IconButton onClick={handleAddComment}><SendIcon color="primary" /></IconButton>) }} onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }} />
                         </DialogActions>
                     </>
                 )}
             </Dialog>
 
-            {/* 고정 버튼들 */}
+            {/* [추가] 검색 플로팅 버튼 (왼쪽 아래) */}
+            <Fab 
+                color="primary" 
+                aria-label="search" 
+                sx={{
+                    position: 'fixed',
+                    bottom: 24,
+                    left: 24, // 오른쪽에서 왼쪽으로 위치 변경
+                    background: 'linear-gradient(45deg, #d32f2f 30%, #ff8a65 90%)', 
+                    '&:hover': { background: 'linear-gradient(45deg, #111111 30%, #444444 90%)' },
+                    zIndex: 1100,
+                }}
+                onClick={handleGoToSearch}
+            >
+                <SearchIcon />
+            </Fab>
+
+            {/* 글쓰기 플로팅 버튼 (오른쪽 아래) */}
             <Fab color="primary" sx={{ position: 'fixed', bottom: 24, right: 24, background: 'linear-gradient(45deg, #d32f2f 30%, #ff8a65 90%)', zIndex: 1100 }} onClick={() => navigate("/feedAdd")}>
                 <AddIcon />
             </Fab>
+
             <Button variant="contained" sx={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', minWidth: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(45deg, #d32f2f 30%, #ff8a65 90%)', padding: 0, zIndex: 1100 }} onClick={handleLoadMore}>
                 <ArrowDownwardIcon />
             </Button>

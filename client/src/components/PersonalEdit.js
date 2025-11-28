@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
+import {
     Box, Typography, Avatar, Button, IconButton, TextField, Badge
 } from "@mui/material";
 
@@ -23,31 +23,33 @@ function decodeToken(token) {
 
 function PersonalEdit() {
     const navigate = useNavigate();
-    const fileInputRef = useRef(null); 
+    const fileInputRef = useRef(null);
 
     // 사용자 입력 정보 State
     const [userInfo, setUserInfo] = useState({
         userId: "",
         nickname: "",
         instrument: "",
-        profileImg: "" 
+        profileImg: ""
     });
 
     // 이미지 변경 프리뷰를 위한 State
-    const [previewImg, setPreviewImg] = useState(""); 
-    const [selectedFile, setSelectedFile] = useState(null); 
+    const [previewImg, setPreviewImg] = useState("");
+    const [selectedFile, setSelectedFile] = useState(null);
 
     // 1. 초기 데이터 세팅
     useEffect(() => {
         const token = localStorage.getItem("token");
         let currentUserId = "";
-        
-        if(token) {
+
+        if (token) {
             const decoded = decodeToken(token);
-            if(decoded) currentUserId = decoded.userId;
+            if (decoded) currentUserId = decoded.userId;
+            console.log(decoded);
+            
         }
 
-        if(currentUserId) {
+        if (currentUserId) {
             // 서버 API 호출 (프로필 정보 가져오기)
             fetch(`http://localhost:3010/feed/personal/${currentUserId}`)
                 .then(res => res.json())
@@ -59,7 +61,7 @@ function PersonalEdit() {
                             userId: user.USERID,
                             nickname: user.NICKNAME || "",
                             profileImg: user.IMGPATH || "", // 서버 쿼리에서 가져온 프로필 이미지
-                            instrument : user.INSTRUMENT || ""
+                            instrument: user.INSTRUMENT || ""
                         });
                     }
                 })
@@ -94,10 +96,10 @@ function PersonalEdit() {
         formData.append("userId", userInfo.userId);
         formData.append("nickname", userInfo.nickname);
         formData.append("instrument", userInfo.instrument);
-        
+
         // 파일이 새로 선택되었을 때만 전송
         if (selectedFile) {
-            formData.append("file", selectedFile); 
+            formData.append("file", selectedFile);
         }
 
         // 수정 요청 전송 (PUT 메서드 사용)
@@ -105,19 +107,20 @@ function PersonalEdit() {
             method: "PUT",
             body: formData
         })
-        .then(res => res.json())
-        .then(data => {
-            if(data.result === "success") {
-                alert("프로필이 수정되었습니다.");
-                navigate(-1); // 이전 페이지로 복귀
-            } else {
-                alert("수정 실패: " + (data.msg || "알 수 없는 오류"));
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("서버 연결 오류가 발생했습니다.");
-        });
+            .then(res => res.json())
+            .then(data => {
+                if (data.result === "success") {
+                    localStorage.setItem("token", data.token);
+                    alert("프로필이 수정되었습니다.");
+                    navigate(-1); // 이전 페이지로 복귀
+                } else {
+                    alert("수정 실패: " + (data.msg || "알 수 없는 오류"));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("서버 연결 오류가 발생했습니다.");
+            });
     };
 
     return (
@@ -148,12 +151,12 @@ function PersonalEdit() {
 
             {/* 프로필 사진 변경 섹션 */}
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 4 }}>
-                <Box 
-                    sx={{ 
-                        position: 'relative', 
+                <Box
+                    sx={{
+                        position: 'relative',
                         cursor: 'pointer',
-                        p: 0.5, 
-                        borderRadius: '50%', 
+                        p: 0.5,
+                        borderRadius: '50%',
                         background: 'linear-gradient(45deg, #d32f2f 30%, #ff8a65 90%)'
                     }}
                     onClick={handleProfileClick}
@@ -162,11 +165,11 @@ function PersonalEdit() {
                         overlap="circular"
                         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                         badgeContent={
-                            <Box sx={{ 
-                                bgcolor: 'white', 
-                                borderRadius: '50%', 
-                                p: 0.5, 
-                                boxShadow: 1, 
+                            <Box sx={{
+                                bgcolor: 'white',
+                                borderRadius: '50%',
+                                p: 0.5,
+                                boxShadow: 1,
                                 border: '1px solid #eee',
                                 display: 'flex'
                             }}>
@@ -174,24 +177,24 @@ function PersonalEdit() {
                             </Box>
                         }
                     >
-                        <Avatar 
-                            src={previewImg || userInfo.profileImg} 
-                            sx={{ width: 100, height: 100, border: '3px solid white' }} 
+                        <Avatar
+                            src={previewImg || userInfo.profileImg}
+                            sx={{ width: 100, height: 100, border: '3px solid white' }}
                         />
                     </Badge>
                 </Box>
-                
-                <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    style={{ display: 'none' }} 
-                    accept="image/*" 
+
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    style={{ display: 'none' }}
+                    accept="image/*"
                     onChange={handleFileChange}
                 />
-                
-                <Typography 
-                    variant="body2" 
-                    color="primary" 
+
+                <Typography
+                    variant="body2"
+                    color="primary"
                     sx={{ mt: 2, cursor: 'pointer', fontWeight: 'bold' }}
                     onClick={handleProfileClick}
                 >
@@ -201,7 +204,7 @@ function PersonalEdit() {
 
             {/* 입력 폼 섹션 */}
             <Box sx={{ px: 4, mt: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                
+
                 <TextField
                     label="닉네임"
                     name="nickname"
@@ -235,11 +238,11 @@ function PersonalEdit() {
 
             {/* 하단 저장 버튼 */}
             <Box sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, p: 2, bgcolor: 'white' }}>
-                <Button 
-                    variant="contained" 
+                <Button
+                    variant="contained"
                     fullWidth
                     onClick={handleSave}
-                    sx={{ 
+                    sx={{
                         height: 50,
                         borderRadius: 3,
                         background: 'linear-gradient(45deg, #d32f2f 30%, #ff8a65 90%)',

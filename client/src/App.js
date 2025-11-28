@@ -25,12 +25,14 @@ import Event from './components/Event';
 import EventAdd from './components/EventAdd';
 import EventDetail from './components/EventDetail';
 import EnsembleRoom from './components/EnsembleRoom';
+import EnsembleAdd from './components/EnsembleAdd';
+import Search from './components/Search';
 
 function App() {
   const location = useLocation();
 
   // 인증 페이지 확인
-  const isAuthPage = ['/login', '/join', '/findId'].includes(location.pathname);
+  const isAuthPage = ['/', '/login', '/join', '/findId'].includes(location.pathname);
   
   // 사이드바가 필요한 페이지 확인
   const isSidebarPage = ['/mypage', '/bookmark'].includes(location.pathname);
@@ -63,6 +65,7 @@ function App() {
         {/* 라우터 렌더링 영역 */}
         <Box sx={{ flexGrow: 1, width: isSidebarPage ? 'calc(100% - 240px)' : '100%' }}>
             <Routes>
+              <Route path="/" element={<Login />} />
               <Route path="/login" element={<Login />} />
               <Route path="/join" element={<Join />} />
               <Route path="/findId" element={<IdPwdSearch />} />
@@ -84,6 +87,8 @@ function App() {
               <Route path="/eventAdd" element={<EventAdd />} />
               <Route path="/event/detail/:eventNo" element={<EventDetail />} />
               <Route path="/ensembleRoom" element={<EnsembleRoom />} />
+              <Route path="/ensemble/add" element={<EnsembleAdd />} />    
+              <Route path="/search" element={<Search />} />    
             </Routes>
         </Box>
       </Box>

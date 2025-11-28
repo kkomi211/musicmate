@@ -25,10 +25,10 @@ function PersonalFeed() {
     
     // Feed.js에서 넘겨준 유저 정보 받기
     const { targetUserId, targetNickname } = location.state || { targetUserId: "unknown", targetNickname: "알 수 없음" };
-
+    let {realNickname, setNickname} = useState("");
     // --- State 관리 ---
     const [userFeeds, setUserFeeds] = useState([]);
-    const [userStats, setUserStats] = useState({ posts: 0, followers: 0, following: 0, instrument : "", profileImg: "" });
+    const [userStats, setUserStats] = useState({ posts: 0, followers: 0, following: 0, instrument : "", profileImg: "", nickname: "" });
     
     // 피드 개수 관리 (초기 3개)
     const [feedCount, setFeedCount] = useState(3);
@@ -68,10 +68,15 @@ function PersonalFeed() {
         let currentId = "";
         if(token) {
             try {
+                
+                
                 const base64Url = token.split('.')[1];
                 const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
                 const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
                 currentId = JSON.parse(jsonPayload).userId;
+                const decoded = JSON.parse(jsonPayload);
+                console.log(decoded);
+                
                 setMyUserId(currentId);
             } catch(e) {}
         }
@@ -82,12 +87,14 @@ function PersonalFeed() {
             .then(data => {
                 if (data.result === "success" && data.list.length > 0) {
                     const stats = data.list[0];
+                    console.log(stats);
                     setUserStats({
                         posts: stats.POST_COUNT,
                         followers: stats.FOLLOWER_COUNT,
                         following: stats.FOLLOWING_COUNT,
                         instrument : stats.INSTRUMENT || "",
-                        profileImg: stats.IMGPATH || "" 
+                        profileImg: stats.IMGPATH || "",
+                        nickname: stats.NICKNAME 
                     });
                 }
             })
@@ -269,7 +276,7 @@ function PersonalFeed() {
                 <IconButton onClick={() => navigate(-1)}>
                     <ArrowBackIosNewIcon sx={{ color: '#333' }} />
                 </IconButton>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', ml: 1 }}>{targetNickname}</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', ml: 1 }}>{userStats.nickname}</Typography>
             </Box>
 
             {/* 2. 프로필 섹션 */}
@@ -277,10 +284,10 @@ function PersonalFeed() {
                 <Box sx={{ p: 0.5, borderRadius: '50%', background: 'linear-gradient(45deg, #d32f2f 30%, #ff8a65 90%)' }}>
                     <Avatar src={userStats.profileImg} sx={{ width: 100, height: 100, border: '3px solid white' }} />
                 </Box>
-                <Typography variant="h5" sx={{ fontWeight: 'bold', mt: 2 }}>{targetNickname}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 'bold', mt: 2 }}>{userStats.nickname}</Typography>
                 <Typography variant="body2" color="text.secondary">@{targetUserId}</Typography>
                 <Typography variant="body1" sx={{ mt: 2, textAlign: 'center' }}>
-                    {userStats.instrument ? `주 사용 악기 : ${userStats.instrument}` : `음악을 사랑하는 ${targetNickname}입니다. 🎸`}
+                    {userStats.instrument ? `주 사용 악기 : ${userStats.instrument}` : `음악을 사랑하는 ${userStats.nickname}입니다. 🎸`}
                 </Typography>
                 
                 {/* 버튼 영역 */}
