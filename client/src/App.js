@@ -27,6 +27,7 @@ import EventDetail from './components/EventDetail';
 import EnsembleRoom from './components/EnsembleRoom';
 import EnsembleAdd from './components/EnsembleAdd';
 import Search from './components/Search';
+import Alert from './components/Alert';
 
 function App() {
   const location = useLocation();
@@ -89,6 +90,7 @@ function App() {
               <Route path="/ensembleRoom" element={<EnsembleRoom />} />
               <Route path="/ensemble/add" element={<EnsembleAdd />} />    
               <Route path="/search" element={<Search />} />    
+              <Route path="/alert" element={<Alert />} />    
             </Routes>
         </Box>
       </Box>

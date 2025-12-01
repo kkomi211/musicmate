@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Stack, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Box, Button, Stack, Typography, Badge } from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom'; // [수정] useLocation 추가
 
 // 아이콘
 import PersonIcon from '@mui/icons-material/Person';
 import SendIcon from '@mui/icons-material/Send';
-import HomeIcon from '@mui/icons-material/Home'; // [추가] 홈 아이콘
+import HomeIcon from '@mui/icons-material/Home'; 
+import NotificationsIcon from '@mui/icons-material/Notifications';
 
 // JWT 디코딩 헬퍼
 function decodeToken(token) {
@@ -22,12 +23,16 @@ function decodeToken(token) {
 
 function FeedHeader() {
     const navigate = useNavigate();
+    const location = useLocation(); // [추가] 현재 경로 감지용 훅
 
-    // [추가] 내 정보 State
+    // 내 정보 State
     const [myUserId, setMyUserId] = useState("");
     const [myNickname, setMyNickname] = useState("");
+    
+    // 안 읽은 알림 상태
+    const [hasUnreadAlert, setHasUnreadAlert] = useState(false);
 
-    // 토큰에서 내 ID와 닉네임을 가져오는 로직
+    // [수정] location이 변경될 때마다(페이지 이동 시) 실행되도록 수정
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
@@ -35,23 +40,59 @@ function FeedHeader() {
             if (decoded) {
                 setMyUserId(decoded.userId);
                 setMyNickname(decoded.nickname || decoded.userId);
+                
+                // 로그인 되어있으면 안 읽은 알림 체크
+                checkUnreadAlerts(decoded.userId);
             }
         }
-    }, []);
+    }, [location]); // [중요] location이 바뀔 때마다 이 useEffect가 실행됨
+
+    // 안 읽은 알림 확인 함수
+    const checkUnreadAlerts = (userId) => {
+        fetch(`http://localhost:3010/alert/unread/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.result === "success") {
+                    // 현재 페이지가 알림 페이지(/alert)라면 
+                    // 알림을 다 읽은 것으로 간주하여 배지를 숨김 (선택 사항)
+                    if (location.pathname === '/alert') {
+                        setHasUnreadAlert(false);
+                    } else {
+                        setHasUnreadAlert(data.hasUnread);
+                    }
+                }
+            })
+            .catch(err => console.error("알림 체크 실패:", err));
+    };
 
     // 공통 버튼 스타일 정의
     const gradientButtonStyle = {
-        borderRadius: '20px', // 둥글게
-        background: 'linear-gradient(45deg, #d32f2f 30%, #ff8a65 90%)', // 그라데이션
+        borderRadius: '20px', 
+        background: 'linear-gradient(45deg, #d32f2f 30%, #ff8a65 90%)', 
         color: 'white',
         fontWeight: 'bold',
-        boxShadow: '0 2px 4px 1px rgba(255, 105, 135, .3)', // 그림자 효과
-        textTransform: 'none', // 대문자 자동 변환 방지
+        boxShadow: '0 2px 4px 1px rgba(255, 105, 135, .3)', 
+        textTransform: 'none', 
         border: 'none',
         '&:hover': {
             background: 'linear-gradient(45deg, #b71c1c 30%, #ff7043 90%)',
             boxShadow: '0 4px 6px 2px rgba(255, 105, 135, .4)',
         },
+    };
+
+    // 공통: 흰색 배경에 테두리 있는 버튼 스타일 (상단 우측용)
+    const outlinedButtonStyle = {
+        ...gradientButtonStyle,
+        fontSize: '0.75rem',
+        px: 2,
+        background: 'white',
+        color: '#d32f2f',
+        border: '1px solid #ff8a65',
+        boxShadow: 'none',
+        '&:hover': {
+            backgroundColor: '#fff5f5',
+            border: '1px solid #d32f2f',
+        }
     };
 
     const handleGoToMyFeed = () => {
@@ -60,7 +101,6 @@ function FeedHeader() {
             navigate("/login");
             return;
         }
-        // [수정] 내 개인 피드로 이동
         navigate("/personalFeed", { state: { targetUserId: myUserId, targetNickname: myNickname } });
     };
 
@@ -83,8 +123,8 @@ function FeedHeader() {
                     mb: 2
                 }}
             >
-                {/* [수정] 왼쪽: 내 피드 버튼 */}
-                <Box sx={{ width: '30%', textAlign: 'left' }}>
+                {/* 왼쪽: 내 피드 버튼 */}
+                <Box sx={{ width: '25%', textAlign: 'left' }}>
                     {myUserId && (
                         <Button
                             size="small"
@@ -125,51 +165,54 @@ function FeedHeader() {
                     MUSICMATE
                 </Typography>
                 
-                {/* 오른쪽 상단 버튼 그룹 */}
+                {/* 오른쪽 상단 버튼 그룹 (알림, 마이페이지, 메시지) */}
                 <Stack 
                     direction={'row'} 
                     spacing={1} 
                     sx={{ 
-                        width: '30%', 
+                        width: 'auto', 
+                        minWidth: '25%',
                         justifyContent: 'flex-end'
                     }}
                 >
+                    {/* 알림 버튼 (Badge 적용) */}
+                    <Button 
+                        size="small" 
+                        startIcon={
+                            <Badge 
+                                color="error" 
+                                variant="dot" 
+                                invisible={!hasUnreadAlert}
+                                sx={{ 
+                                    '& .MuiBadge-badge': { 
+                                        right: 2, 
+                                        top: 2,
+                                        border: '1px solid white' 
+                                    } 
+                                }}
+                            >
+                                <NotificationsIcon />
+                            </Badge>
+                        } 
+                        sx={outlinedButtonStyle}
+                        onClick={()=>{ navigate("/alert") }} // 경로 수정됨 (/notification -> /alert)
+                    >
+                        알림
+                    </Button>
+
                     <Button 
                         size="small" 
                         startIcon={<PersonIcon />} 
-                        sx={{ 
-                            ...gradientButtonStyle, 
-                            fontSize: '0.75rem', 
-                            px: 2,
-                            background: 'white',
-                            color: '#d32f2f',
-                            border: '1px solid #ff8a65',
-                            boxShadow: 'none',
-                            '&:hover': {
-                                backgroundColor: '#fff5f5',
-                                border: '1px solid #d32f2f',
-                            }
-                        }}
+                        sx={outlinedButtonStyle}
                         onClick={()=>{navigate("/mypage")}}
                     >
                         마이페이지
                     </Button>
+
                     <Button 
                         size="small" 
-                        startIcon={<SendIcon />}
-                        sx={{ 
-                            ...gradientButtonStyle, 
-                            fontSize: '0.75rem',
-                            px: 2,
-                            background: 'white',
-                            color: '#d32f2f',
-                            border: '1px solid #ff8a65',
-                            boxShadow: 'none',
-                             '&:hover': {
-                                backgroundColor: '#fff5f5',
-                                border: '1px solid #d32f2f',
-                            }
-                        }}
+                        startIcon={<SendIcon />} 
+                        sx={outlinedButtonStyle}
                         onClick={()=>{navigate("/message")}}
                     >
                         메시지
@@ -199,11 +242,11 @@ function FeedHeader() {
             {/* 3. 하단 메뉴 버튼 (5개) */}
             <Stack 
                 direction={'row'} 
-                spacing={1} // 버튼 사이 간격
+                spacing={1} 
                 sx={{ 
                     width: '100%', 
-                    overflowX: 'auto', // 화면 작아지면 스크롤
-                    pb: 1 // 하단 여백
+                    overflowX: 'auto', 
+                    pb: 1 
                 }}
             >
                 <Button sx={{ ...gradientButtonStyle, flexGrow: 1, minWidth: 'fit-content' }} onClick={()=>{navigate("/feed")}}>피드</Button>

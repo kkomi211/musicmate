@@ -49,6 +49,27 @@ router.post("/login", async (req, res) => {
     }
 })
 
+router.get("/unread/:userId", async (req, res) => {
+    let { userId } = req.params;
+    try {
+        // STATUS가 'N' (안읽음)인 알림의 개수를 셉니다.
+        let sql = "SELECT COUNT(*) AS CNT FROM ALERT WHERE USERID = ? AND STATUS = 'N'";
+        let [rows] = await db.query(sql, [userId]);
+
+        let unreadCount = rows[0].CNT;
+        
+        // 안 읽은 알림이 1개 이상이면 true, 아니면 false
+        res.json({ 
+            result: "success", 
+            hasUnread: unreadCount > 0,
+            count: unreadCount 
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ result: "fail", msg: "Server Error" });
+    }
+});
+
 router.post("/join", async (req, res) => {
     // [수정] phone 변수 추가
     let { userId, pwd, name, nickname, gender, instrument, addr, phone } = req.body;

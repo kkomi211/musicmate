@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
     Box, Typography, Fab, Button, Card, CardContent, CardMedia, CardActions, IconButton,
-    Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, Divider, Stack, ListItemAvatar
+    Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, Divider, Stack, ListItemAvatar, Avatar
 } from "@mui/material";
 
 // 아이콘
@@ -17,7 +17,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import SearchIcon from '@mui/icons-material/Search'; // [추가] 검색 아이콘
+import SearchIcon from '@mui/icons-material/Search';
 
 // JWT 디코딩 헬퍼 함수
 function decodeToken(token) {
@@ -47,6 +47,12 @@ function Feed() {
     // 이미지 슬라이드 관련 State
     const [feedImages, setFeedImages] = useState([]);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    // [추가] 파일이 동영상인지 확인하는 헬퍼 함수
+    const isVideoFile = (path) => {
+        if (!path) return false;
+        return path.toLowerCase().endsWith('.mp4');
+    };
 
     // 피드 목록 가져오기
     function getFeeds(id, count) {
@@ -110,7 +116,6 @@ function Feed() {
         const content = commentRef.current.value;
         if(!content) return;
         
-
         fetch('http://localhost:3010/feed/comment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -138,6 +143,28 @@ function Feed() {
         .catch(err => console.error("댓글 삭제 실패:", err));
     };
 
+    // --- 게시물 삭제 ---
+    const handleDeleteFeed = (feedNo) => {
+        if (!window.confirm("게시물을 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.")) return;
+
+        fetch(`http://localhost:3010/feed/${feedNo}`, {
+            method: 'DELETE'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.result === 'success') {
+                alert("게시물이 삭제되었습니다.");
+                setFeedList(prevList => prevList.filter(feed => feed.FEEDNO !== feedNo));
+            } else {
+                alert("게시물 삭제에 실패했습니다.");
+            }
+        })
+        .catch(err => {
+            console.error("게시물 삭제 에러:", err);
+            alert("삭제 중 오류가 발생했습니다.");
+        });
+    };
+
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
@@ -155,9 +182,8 @@ function Feed() {
         getFeeds(userId, nextCount);
     };
 
-    // [추가] 검색 페이지 이동 핸들러
     const handleGoToSearch = () => {
-        navigate("/search"); // 검색 페이지 경로 (App.js에 라우트 설정 필요)
+        navigate("/search"); 
     };
 
     return (
@@ -183,9 +209,8 @@ function Feed() {
                         <Card key={index} sx={{ mb: 4, width: '100%' }}>
                             <CardContent>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                    <Typography 
-                                        variant="h6" 
-                                        sx={{ cursor: "pointer", fontWeight: 'bold' }}
+                                    <Box 
+                                        sx={{ display: 'flex', alignItems: 'center', cursor: "pointer" }}
                                         onClick={() => {
                                             navigate("/personalFeed", { 
                                                 state: { 
@@ -195,16 +220,50 @@ function Feed() {
                                             });
                                         }}
                                     >
-                                        {item.NICKNAME}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">{item.CDATE}</Typography>
+                                        <Avatar 
+                                            // [수정] 서버 주소 제거, 원래대로 복구
+                                            src={item.USER_IMGPATH ? item.USER_IMGPATH : undefined} 
+                                            alt={item.NICKNAME}
+                                            sx={{ mr: 1.5, width: 40, height: 40 }} 
+                                        />
+                                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                            {item.NICKNAME}
+                                        </Typography>
+                                    </Box>
+                                    
+                                    <Stack direction="row" alignItems="center" spacing={1}>
+                                        <Typography variant="caption" color="text.secondary">{item.CDATE}</Typography>
+                                        {item.USERID === userId && (
+                                            <IconButton 
+                                                size="small" 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteFeed(item.FEEDNO);
+                                                }}
+                                                aria-label="delete feed"
+                                            >
+                                                <CloseIcon fontSize="small" />
+                                            </IconButton>
+                                        )}
+                                    </Stack>
                                 </Box>
+
+                                {/* [수정] 동영상/이미지 분기 처리 */}
                                 {item.IMGPATH && (
-                                    <CardMedia
-                                        component="img"
-                                        sx={{ width: "100%", height: "500px", objectFit: "contain", backgroundColor: "#f5f5f5", borderRadius: 1, mb: 2 }}
-                                        image={item.IMGPATH}
-                                    />
+                                    isVideoFile(item.IMGPATH) ? (
+                                        <CardMedia
+                                            component="video"
+                                            controls // 재생 컨트롤 표시
+                                            src={item.IMGPATH}
+                                            sx={{ width: "100%", height: "500px", objectFit: "contain", backgroundColor: "#000", borderRadius: 1, mb: 2 }}
+                                        />
+                                    ) : (
+                                        <CardMedia
+                                            component="img"
+                                            sx={{ width: "100%", height: "500px", objectFit: "contain", backgroundColor: "#f5f5f5", borderRadius: 1, mb: 2 }}
+                                            image={item.IMGPATH}
+                                        />
+                                    )
                                 )}
                                 <Typography variant="body1" sx={{ mb: 2 }}>{item.CONTENT}</Typography>
                             </CardContent>
@@ -236,14 +295,21 @@ function Feed() {
                 {selectedFeed && (
                     <>
                         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="h6">{selectedFeed.NICKNAME}</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Avatar 
+                                    // [수정] 서버 주소 제거, 원래대로 복구
+                                    src={selectedFeed.USER_IMGPATH ? selectedFeed.USER_IMGPATH : undefined} 
+                                    sx={{ mr: 1.5, width: 32, height: 32 }}
+                                />
+                                <Typography variant="h6">{selectedFeed.NICKNAME}</Typography>
+                            </Box>
                             <IconButton onClick={handleCloseModal}><CloseIcon /></IconButton>
                         </DialogTitle>
                         
                         <DialogContent dividers>
                             <Typography variant="body1" sx={{ mb: 2, whiteSpace: 'pre-line' }}>{selectedFeed.CONTENT}</Typography>
                             
-                            {/* 이미지 슬라이드 */}
+                            {/* 이미지/동영상 슬라이드 */}
                             {feedImages.length > 0 ? (
                                 <Box sx={{ position: 'relative', width: '100%', height: 'auto', mb: 2, backgroundColor: '#f5f5f5', borderRadius: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                     {feedImages.length > 1 && (
@@ -251,20 +317,42 @@ function Feed() {
                                             <ArrowBackIosNewIcon fontSize="small" />
                                         </IconButton>
                                     )}
-                                    <Box component="img" src={feedImages[currentImageIndex].IMGPATH} sx={{ width: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: 1 }} />
+                                    
+                                    {/* [수정] 슬라이드 내 동영상/이미지 분기 */}
+                                    {isVideoFile(feedImages[currentImageIndex].IMGPATH) ? (
+                                        <Box 
+                                            component="video" 
+                                            src={feedImages[currentImageIndex].IMGPATH} 
+                                            controls 
+                                            sx={{ width: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: 1, backgroundColor: '#000' }} 
+                                        />
+                                    ) : (
+                                        <Box component="img" src={feedImages[currentImageIndex].IMGPATH} sx={{ width: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: 1 }} />
+                                    )}
+
                                     {feedImages.length > 1 && (
                                         <IconButton onClick={handleNextImage} sx={{ position: 'absolute', right: 5, zIndex: 10, backgroundColor: 'rgba(255,255,255,0.7)' }}>
                                             <ArrowForwardIosIcon fontSize="small" />
                                         </IconButton>
                                     )}
-                                    {feedImages.length > 1 && (
-                                        <Typography variant="caption" sx={{ position: 'absolute', bottom: 10, right: 15, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', px: 1, borderRadius: 1 }}>
-                                            {currentImageIndex + 1} / {feedImages.length}
-                                        </Typography>
-                                    )}
+                                    <Typography variant="caption" sx={{ position: 'absolute', bottom: 10, right: 15, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', px: 1, borderRadius: 1 }}>
+                                        {currentImageIndex + 1} / {feedImages.length}
+                                    </Typography>
                                 </Box>
                             ) : (
-                                selectedFeed.IMGPATH && <Box component="img" src={selectedFeed.IMGPATH} sx={{ width: '100%', borderRadius: 1, mb: 2 }} />
+                                // 단일 파일일 때 분기
+                                selectedFeed.IMGPATH && (
+                                    isVideoFile(selectedFeed.IMGPATH) ? (
+                                        <Box 
+                                            component="video" 
+                                            src={selectedFeed.IMGPATH} 
+                                            controls
+                                            sx={{ width: '100%', borderRadius: 1, mb: 2, backgroundColor: '#000' }} 
+                                        />
+                                    ) : (
+                                        <Box component="img" src={selectedFeed.IMGPATH} sx={{ width: '100%', borderRadius: 1, mb: 2 }} />
+                                    )
+                                )
                             )}
                             
                             <Divider sx={{ my: 2 }} />
@@ -300,14 +388,14 @@ function Feed() {
                 )}
             </Dialog>
 
-            {/* [추가] 검색 플로팅 버튼 (왼쪽 아래) */}
+            {/* 검색 플로팅 버튼 */}
             <Fab 
                 color="primary" 
                 aria-label="search" 
                 sx={{
                     position: 'fixed',
                     bottom: 24,
-                    left: 24, // 오른쪽에서 왼쪽으로 위치 변경
+                    left: 24, 
                     background: 'linear-gradient(45deg, #d32f2f 30%, #ff8a65 90%)', 
                     '&:hover': { background: 'linear-gradient(45deg, #111111 30%, #444444 90%)' },
                     zIndex: 1100,
@@ -317,7 +405,7 @@ function Feed() {
                 <SearchIcon />
             </Fab>
 
-            {/* 글쓰기 플로팅 버튼 (오른쪽 아래) */}
+            {/* 글쓰기 플로팅 버튼 */}
             <Fab color="primary" sx={{ position: 'fixed', bottom: 24, right: 24, background: 'linear-gradient(45deg, #d32f2f 30%, #ff8a65 90%)', zIndex: 1100 }} onClick={() => navigate("/feedAdd")}>
                 <AddIcon />
             </Fab>

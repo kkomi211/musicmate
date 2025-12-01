@@ -10,6 +10,7 @@ const dealRouter = require("./routes/deal");
 const bandRouter = require("./routes/band");
 const eventRouter = require("./routes/event");
 const ensembleRouter = require("./routes/ensemble");
+const alertRouter = require("./routes/alert");
 const path = require("path");
 
 
@@ -31,6 +32,7 @@ app.use("/deal", dealRouter );
 app.use("/band", bandRouter );
 app.use("/event", eventRouter );
 app.use("/ensemble", ensembleRouter );
+app.use("/alert", alertRouter );
 
 
 

@@ -97,14 +97,21 @@ router.post("/send", async (req, res) => {
         }
 
         // 2. 메시지 저장 (CHAT_MESSAGE)
-        // CHAT_MESSAGE 테이블 구조에 맞춰 컬럼명(CHATROOMNO, USERID, CONTENT) 사용
         let insertMsgSql = "INSERT INTO CHAT_MESSAGE(CHATROOMNO, CONTENT, USERID, CDATE, UDATE) VALUES(?, ?, ?, NOW(), NOW())";
         await db.query(insertMsgSql, [chatRoomNo, content, senderId]);
 
+        // 3. [추가] 알림 생성 (ALERT)
+        // KIND: 'M' (메시지), FEEDNO: NULL (메시지이므로 피드번호 없음)
+        let insertAlertSql = `
+            INSERT INTO ALERT (USERID, STATUS, CDATE, KIND, SENDERID) 
+            VALUES (?, 'N', NOW(), 'M', ?)
+        `;
+        await db.query(insertAlertSql, [receiverId, senderId]);
+
         res.json({ result: "success" });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ result: "fail" });
+        console.error("메시지 전송 오류:", error);
+        res.status(500).json({ result: "fail", msg: "Server Error" });
     }
 });
 

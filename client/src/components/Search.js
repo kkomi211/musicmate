@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-    Box, Typography, TextField, InputAdornment, IconButton, Paper, Stack, Grid, Avatar, Card, CardContent, 
+import {
+    Box, Typography, TextField, InputAdornment, IconButton, Paper, Stack, Grid, Avatar, Card, CardContent,
     FormControl, InputLabel, Select, MenuItem, Button, CardActions,
     // 모달 관련 컴포넌트
-    Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, Divider
+    Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, Divider,
+    CardMedia
 } from "@mui/material";
 
 // 아이콘
@@ -39,17 +40,17 @@ function Search() {
     const [searchTerm, setSearchTerm] = useState("");
     const [results, setResults] = useState({ users: [], feeds: [] });
     const [myUserId, setMyUserId] = useState("");
-    const [searchType, setSearchType] = useState('feed'); 
-    
+    const [searchType, setSearchType] = useState('feed');
+
     // --- [통합] 모달 관련 State ---
     const [openModal, setOpenModal] = useState(false);
     const [selectedFeed, setSelectedFeed] = useState(null);
     const [comments, setComments] = useState([]);
     const commentRef = useRef();
-    const [feedImages, setFeedImages] = useState([]); 
+    const [feedImages, setFeedImages] = useState([]);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-    
+
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
@@ -64,37 +65,37 @@ function Search() {
             setResults({ users: [], feeds: [] });
             return;
         }
-        
+
         console.log(`[검색 요청] 타입: ${searchType}, 검색어: ${searchTerm}`);
 
         fetch("http://localhost:3010/feed/search", {
             method: "POST",
-            headers: { "Content-Type": "application/json" }, 
-            body: JSON.stringify({ 
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
                 q: searchTerm,
                 type: searchType,
-                userId: myUserId 
+                userId: myUserId
             })
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.result === "success") {
-                console.log("[검색 결과 성공]:", data); 
-                setResults({ 
-                    users: data.users || [], 
-                    feeds: data.feeds || [] 
-                });
-            } else {
-                console.warn("[검색 실패]:", data);
-                   setResults({ users: [], feeds: [] });
-            }
-        })
-        .catch(err => {
-            console.error("[통신 오류]:", err);
-            setResults({ users: [], feeds: [] });
-        });
-    }, [searchTerm, searchType, myUserId]); 
-    
+            .then(res => res.json())
+            .then(data => {
+                if (data.result === "success") {
+                    console.log("[검색 결과 성공]:", data);
+                    setResults({
+                        users: data.users || [],
+                        feeds: data.feeds || []
+                    });
+                } else {
+                    console.warn("[검색 실패]:", data);
+                    setResults({ users: [], feeds: [] });
+                }
+            })
+            .catch(err => {
+                console.error("[통신 오류]:", err);
+                setResults({ users: [], feeds: [] });
+            });
+    }, [searchTerm, searchType, myUserId]);
+
     const handleSearch = () => {
         setSearchTerm(currentSearchTerm);
     };
@@ -104,6 +105,10 @@ function Search() {
 
     // 좋아요 토글
     const toggleLike = (feedNo) => {
+        if (!myUserId) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
         const newFeeds = results.feeds.map(feed => {
             if (feed.FEEDNO === feedNo) {
                 const isCurrentlyLiked = feed.MY_LIKE === 1;
@@ -119,9 +124,13 @@ function Search() {
         setResults(prev => ({ ...prev, feeds: newFeeds }));
         fetch(`http://localhost:3010/feed/like/${feedNo}/${myUserId}`);
     };
-    
+
     // 북마크 토글
     const toggleBookmark = (feedNo) => {
+        if (!myUserId) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
         const newFeeds = results.feeds.map(feed => {
             if (feed.FEEDNO === feedNo) {
                 const isCurrentlyBookmarked = feed.MY_BOOKMARK === 1;
@@ -136,14 +145,14 @@ function Search() {
         setResults(prev => ({ ...prev, feeds: newFeeds }));
         fetch(`http://localhost:3010/feed/bookmark/${feedNo}/${myUserId}`);
     };
-    
+
     // 댓글 및 이미지 목록 가져오기
     const getComments = (feedNo) => {
         fetch(`http://localhost:3010/feed/comment/${feedNo}`)
             .then(res => res.json())
             .then(data => {
-                if(data.list) setComments(data.list);
-                if(data.imgList && data.imgList.length > 0) setFeedImages(data.imgList);
+                if (data.list) setComments(data.list);
+                if (data.imgList && data.imgList.length > 0) setFeedImages(data.imgList);
                 else setFeedImages([]);
             })
             .catch(err => console.error("댓글 로딩 실패:", err));
@@ -164,42 +173,123 @@ function Search() {
         setComments([]);
         setFeedImages([]);
     };
-    
-    // 댓글 작성
+
+    // --- 댓글 작성 로직 ---
     const handleAddComment = () => {
-        const content = commentRef.current.value;
-        if(!content) return;
+        if (!myUserId) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+        if (!commentRef.current || !commentRef.current.value) return;
+
+        const content = commentRef.current.value.trim();
+        if (!content) return;
+
+        const currentFeedNo = selectedFeed.FEEDNO;
 
         fetch('http://localhost:3010/feed/comment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ feedNo: selectedFeed.FEEDNO, userId: myUserId, content: content })
+            body: JSON.stringify({ feedNo: currentFeedNo, userId: myUserId, content: content })
         })
-        .then(res => res.json())
-        .then(data => {
-            commentRef.current.value = ""; 
-            getComments(selectedFeed.FEEDNO); // 목록 갱신
-        })
-        .catch(err => console.error("댓글 작성 실패:", err));
+            .then(res => res.json())
+            .then(data => {
+                if (data.result2 === 'success') {
+                    commentRef.current.value = "";
+
+                    getComments(currentFeedNo);
+
+                    setResults(prev => ({
+                        ...prev,
+                        feeds: prev.feeds.map(feed =>
+                            feed.FEEDNO === currentFeedNo ?
+                                { ...feed, COMMENT_COUNT: (feed.COMMENT_COUNT || 0) + 1 } : feed
+                        )
+                    }));
+
+                    setSelectedFeed(prev => ({
+                        ...prev,
+                        COMMENT_COUNT: (prev.COMMENT_COUNT || 0) + 1
+                    }));
+                } else {
+                    alert("댓글 작성에 실패했습니다.");
+                }
+            })
+            .catch(err => {
+                console.error("댓글 작성 통신 실패:", err);
+                alert("댓글 작성 중 오류가 발생했습니다.");
+            });
     };
-    
-    // 댓글 삭제
+
+    const isVideoFile = (path) => {
+        if (!path) return false;
+        return path.toLowerCase().endsWith('.mp4');
+    };
+
+    // --- 댓글 삭제 로직 ---
     const handleDeleteComment = (commentNo) => {
-        if(!window.confirm("댓글을 삭제하시겠습니까?")) return;
-        
+        if (!myUserId) return;
+        if (!window.confirm("댓글을 삭제하시겠습니까?")) return;
+
+        const currentFeedNo = selectedFeed.FEEDNO;
+
         fetch(`http://localhost:3010/feed/comment/${commentNo}`, {
             method: 'DELETE'
         })
-        .then(res => res.json())
-        .then(() => {
-            getComments(selectedFeed.FEEDNO); // 목록 갱신
-        })
-        .catch(err => console.error("댓글 삭제 실패:", err));
+            .then(res => res.json())
+            .then(data => {
+                if (data.result2 === 'success') {
+                    // 1. 모달 내 댓글 목록 갱신
+                    getComments(currentFeedNo);
+                    // 2. 메인 피드 목록의 댓글 수 즉시 업데이트 (-1)
+                    setResults(prev => ({
+                        ...prev,
+                        feeds: prev.feeds.map(feed =>
+                            feed.FEEDNO === currentFeedNo ?
+                                { ...feed, COMMENT_COUNT: Math.max(0, (feed.COMMENT_COUNT || 1) - 1) } : feed
+                        )
+                    }));
+                    // 3. 모달의 selectedFeed 객체도 업데이트
+                    setSelectedFeed(prev => ({
+                        ...prev,
+                        COMMENT_COUNT: Math.max(0, (prev.COMMENT_COUNT || 1) - 1)
+                    }));
+                } else {
+                    alert("댓글 삭제에 실패했습니다.");
+                }
+            })
+            .catch(err => console.error("댓글 삭제 실패:", err));
     };
-    
+
+    // --- [추가] 게시물 삭제 로직 ---
+    const handleDeleteFeed = (feedNo) => {
+        if (!window.confirm("게시물을 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.")) return;
+
+        fetch(`http://localhost:3010/feed/${feedNo}`, {
+            method: 'DELETE'
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.result === 'success') {
+                    alert("게시물이 삭제되었습니다.");
+                    // 삭제된 피드를 화면 리스트에서 제거 (feeds 배열만 필터링)
+                    setResults(prev => ({
+                        ...prev,
+                        feeds: prev.feeds.filter(feed => feed.FEEDNO !== feedNo)
+                    }));
+                } else {
+                    alert("게시물 삭제에 실패했습니다.");
+                }
+            })
+            .catch(err => {
+                console.error("게시물 삭제 에러:", err);
+                alert("삭제 중 오류가 발생했습니다.");
+            });
+    };
+
     const handleNextImage = () => setCurrentImageIndex((prev) => (prev + 1) % feedImages.length);
     const handlePrevImage = () => setCurrentImageIndex((prev) => (prev - 1 + feedImages.length) % feedImages.length);
-    
+
     const handleUserClick = (user) => {
         navigate("/personalFeed", { state: { targetUserId: user.USERID, targetNickname: user.NICKNAME } });
     };
@@ -210,33 +300,35 @@ function Search() {
         const isBookmarked = item.MY_BOOKMARK === 1;
 
         const handleUserClickInternal = (e) => {
-            e.stopPropagation(); 
+            e.stopPropagation();
             handleUserClick(item);
         };
-        
+
         const handleFeedClickInternal = (e) => {
-             e.stopPropagation(); 
-             handleOpenModal(item);
+            e.stopPropagation();
+            handleOpenModal(item);
         };
 
         const handleLikeClick = (e) => {
             e.stopPropagation();
             toggleLike(item.FEEDNO);
         };
-        
+
         const handleBookmarkClick = (e) => {
             e.stopPropagation();
             toggleBookmark(item.FEEDNO);
         };
 
+
+
         return (
             <Grid item xs={12} key={item.FEEDNO} sx={{ display: 'flex', justifyContent: 'center' }}>
-                <Card 
-                    sx={{ 
-                        width: '100%', 
-                        maxWidth: '600px', 
-                        borderRadius: 3, 
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)', 
+                <Card
+                    sx={{
+                        width: '100%',
+                        maxWidth: '600px',
+                        borderRadius: 3,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                         mb: 3, // 세로 간격 추가
                         transition: 'transform 0.2s',
                         '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 6px 15px rgba(0,0,0,0.1)' }
@@ -244,38 +336,65 @@ function Search() {
                 >
                     {/* 상단: 사용자 정보 */}
                     <CardContent sx={{ pb: 1.5, display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={handleUserClickInternal}>
-                        <Avatar 
-                            alt={item.NICKNAME} 
-                            src={item.USER_IMGPATH || 'https://placehold.co/100x100/CCCCCC/333333?text=Profile'}
+                        <Avatar
+                            alt={item.NICKNAME}
+                            src={item.USER_IMGPATH ? item.USER_IMGPATH : undefined}
                             sx={{ width: 36, height: 36, mr: 1.5 }}
                         />
-                        <Box>
-                            <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.2, color: '#333' }}>
-                                {item.NICKNAME}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                                {new Date(item.CDATE).toLocaleDateString('ko-KR')}
-                            </Typography>
+                        <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.2, color: '#333' }}>
+                                    {item.NICKNAME}
+                                </Typography>
+                                {/* [수정] 날짜 옆에 삭제 버튼 배치 (Stack 사용) */}
+                                <Stack direction="row" alignItems="center" spacing={1}>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {new Date(item.CDATE).toLocaleDateString('ko-KR')}
+                                    </Typography>
+                                    {item.USERID === myUserId && (
+                                        <IconButton
+                                            size="small"
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
+                                                handleDeleteFeed(item.FEEDNO);
+                                            }}
+                                            aria-label="delete feed"
+                                        >
+                                            <CloseIcon fontSize="small" />
+                                        </IconButton>
+                                    )}
+                                </Stack>
+                            </Box>
                         </Box>
                     </CardContent>
 
                     {/* 메인 콘텐츠: 이미지 */}
                     {item.IMGPATH && (
-                        <Box 
-                            sx={{ 
-                                height: '500px', 
+                        <Box
+                            sx={{
+                                height: '500px',
                                 overflow: 'hidden',
                                 cursor: 'pointer',
-                                backgroundColor: '#f5f5f5' 
+                                backgroundColor: '#f5f5f5'
                             }}
                             onClick={handleFeedClickInternal}
                         >
-                            <img 
-                                src={item.IMGPATH} 
-                                alt="Feed Image" 
-                                style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400/CCCCCC/333333?text=No+Image'; }}
-                            />
+                            {item.IMGPATH && (
+                                isVideoFile(item.IMGPATH) ? (
+                                    <CardMedia
+                                        component="video"
+                                        controls // 재생 컨트롤 표시
+                                        src={item.IMGPATH}
+                                        sx={{ width: "100%", height: "500px", objectFit: "contain", backgroundColor: "#000", borderRadius: 1, mb: 2 }}
+                                    />
+                                ) : (
+                                    <CardMedia
+                                        component="img"
+                                        sx={{ width: "100%", height: "500px", objectFit: "contain", backgroundColor: "#f5f5f5", borderRadius: 1, mb: 2 }}
+                                        image={item.IMGPATH}
+                                    />
+                                )
+                            )}
                         </Box>
                     )}
 
@@ -292,7 +411,11 @@ function Search() {
                         {/* 북마크 버튼 */}
                         <Box>
                             <IconButton onClick={handleBookmarkClick} sx={{ color: isBookmarked ? '#333' : 'text.secondary' }}>
-                                {isBookmarked ? <BookmarkIcon sx={{ fill: "url(#linearColors)" }} /> : <BookmarkBorderIcon />}
+                                {isBookmarked ? (
+                                    <BookmarkIcon sx={{ fill: "url(#linearColors)" }} />
+                                ) : (
+                                    <BookmarkBorderIcon />
+                                )}
                             </IconButton>
                         </Box>
                     </CardActions>
@@ -303,14 +426,14 @@ function Search() {
                             좋아요 {item.LIKE_COUNT || 0}개
                         </Typography>
                         {/* 피드 내용 미리보기 */}
-                        <Typography 
-                            variant="body2" 
-                            color="text.primary" 
-                            sx={{ 
-                                overflow: 'hidden', 
-                                textOverflow: 'ellipsis', 
-                                display: '-webkit-box', 
-                                WebkitLineClamp: 2, 
+                        <Typography
+                            variant="body2"
+                            color="text.primary"
+                            sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
                                 WebkitBoxOrient: 'vertical',
                                 cursor: 'pointer'
                             }}
@@ -318,11 +441,7 @@ function Search() {
                         >
                             {item.CONTENT}
                         </Typography>
-                        
-                        {/* 댓글 더보기 */}
-                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block', cursor: 'pointer' }} onClick={handleFeedClickInternal}>
-                            댓글 보기...
-                        </Typography>
+
                     </CardContent>
                 </Card>
             </Grid>
@@ -339,7 +458,7 @@ function Search() {
                     <stop offset="90%" stopColor="#ff8a65" />
                 </linearGradient>
             </svg>
-            
+
             {/* 1. 상단 검색 바 */}
             <Paper elevation={1} sx={{ p: 2, display: 'flex', alignItems: 'center', borderRadius: 0 }}>
                 <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
@@ -360,14 +479,14 @@ function Search() {
                         </Select>
                     </FormControl>
 
-                    <TextField 
-                        fullWidth 
-                        variant="outlined" 
-                        placeholder="검색어를 입력하세요" 
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        placeholder="검색어를 입력하세요"
                         size="small"
-                        value={currentSearchTerm} 
-                        onChange={(e) => setCurrentSearchTerm(e.target.value)} 
-                        onKeyDown={(e) => { if(e.key === 'Enter') handleSearch(); }} 
+                        value={currentSearchTerm}
+                        onChange={(e) => setCurrentSearchTerm(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
@@ -377,13 +496,13 @@ function Search() {
                             sx: { borderRadius: 5, backgroundColor: '#f5f5f5', border: 'none' }
                         }}
                     />
-                    
+
                     {/* 검색 실행 버튼 */}
-                    <Button 
-                        variant="contained" 
+                    <Button
+                        variant="contained"
                         onClick={handleSearch}
                         disabled={currentSearchTerm.trim().length === 0}
-                        sx={{ 
+                        sx={{
                             background: 'linear-gradient(45deg, #d32f2f 30%, #ff8a65 90%)',
                             color: 'white',
                             fontWeight: 'bold',
@@ -399,28 +518,32 @@ function Search() {
 
             {/* 2. 검색 결과 영역 */}
             <Box sx={{ p: 3, maxWidth: '800px', mx: 'auto' }}>
-                
+
                 {searchTerm.trim().length > 0 && results.users.length === 0 && results.feeds.length === 0 && (
                     <Typography textAlign="center" color="text.secondary" sx={{ mt: 5 }}>
                         '{searchTerm}'에 대한 결과가 없습니다.
                     </Typography>
                 )}
-                
+
                 {/* 2-A. 유저 결과 섹션 */}
                 {results.users.length > 0 && searchType !== 'feed' && (
                     <Box sx={{ mb: 4 }}>
                         <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: 'primary.main' }}>
                             <PersonIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} /> 사용자 ({results.users.length})
                         </Typography>
-                        
+
                         <Stack spacing={1}>
                             {results.users.map((user) => (
-                                <Paper 
-                                    key={user.USERID} 
+                                <Paper
+                                    key={user.USERID}
                                     onClick={() => handleUserClick(user)}
                                     sx={{ p: 1.5, borderRadius: 2, display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover': { bgcolor: '#f5f5f5' } }}
                                 >
-                                    <Avatar src={user.IMGPATH} sx={{ width: 40, height: 40, mr: 2 }} />
+                                    {/* [수정] 유저 검색 리스트의 프로필 이미지 경로 수정 */}
+                                    <Avatar
+                                        src={user.IMGPATH ? user.IMGPATH : undefined}
+                                        sx={{ width: 40, height: 40, mr: 2 }}
+                                    />
                                     <Box>
                                         <Typography fontWeight="bold">{user.NICKNAME}</Typography>
                                         <Typography variant="caption" color="text.secondary">@{user.USERID}</Typography>
@@ -437,7 +560,7 @@ function Search() {
                         <Typography variant="h6" fontWeight="bold" sx={{ mb: 3, color: 'primary.main' }}>
                             <ChatBubbleOutlineIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} /> 피드 ({results.feeds.length})
                         </Typography>
-                        
+
                         <Grid container spacing={2} sx={{ display: 'flex', justifyContent: 'center' }}>
                             {results.feeds.map((item) => renderFeedCard(item))}
                         </Grid>
@@ -445,7 +568,7 @@ function Search() {
                 )}
 
             </Box>
-            
+
             {/* --- 피드 상세 모달 (Feed.js 로직 통합) --- */}
             <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
                 {selectedFeed && (
@@ -454,10 +577,10 @@ function Search() {
                             <Typography variant="h6">{selectedFeed.NICKNAME}</Typography>
                             <IconButton onClick={handleCloseModal}><CloseIcon /></IconButton>
                         </DialogTitle>
-                        
+
                         <DialogContent dividers>
                             <Typography variant="body1" sx={{ mb: 2, whiteSpace: 'pre-line' }}>{selectedFeed.CONTENT}</Typography>
-                            
+
                             {/* 이미지 슬라이드 */}
                             {feedImages.length > 0 ? (
                                 <Box sx={{ position: 'relative', width: '100%', height: 'auto', mb: 2, backgroundColor: '#f5f5f5', borderRadius: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -466,7 +589,16 @@ function Search() {
                                             <ArrowBackIosNewIcon fontSize="small" />
                                         </IconButton>
                                     )}
-                                    <Box component="img" src={feedImages[currentImageIndex]?.IMGPATH} sx={{ width: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: 1 }} />
+                                    {isVideoFile(feedImages[currentImageIndex].IMGPATH) ? (
+                                        <Box
+                                            component="video"
+                                            src={feedImages[currentImageIndex].IMGPATH}
+                                            controls
+                                            sx={{ width: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: 1, backgroundColor: '#000' }}
+                                        />
+                                    ) : (
+                                        <Box component="img" src={feedImages[currentImageIndex].IMGPATH} sx={{ width: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: 1 }} />
+                                    )}
                                     {feedImages.length > 1 && (
                                         <IconButton onClick={handleNextImage} sx={{ position: 'absolute', right: 5, zIndex: 10, backgroundColor: 'rgba(255,255,255,0.7)' }}>
                                             <ArrowForwardIosIcon fontSize="small" />
@@ -481,7 +613,7 @@ function Search() {
                             ) : (
                                 selectedFeed.IMGPATH && <Box component="img" src={selectedFeed.IMGPATH} sx={{ width: '100%', borderRadius: 1, mb: 2 }} />
                             )}
-                            
+
                             <Divider sx={{ my: 2 }} />
                             <Typography variant="subtitle2" sx={{ mb: 1 }}>댓글</Typography>
                             <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
@@ -490,9 +622,9 @@ function Search() {
                                         secondaryAction={comment.USERID === myUserId && (
                                             <IconButton edge="end" size="small" onClick={() => handleDeleteComment(comment.COMMENTNO)}><CloseIcon fontSize="small" /></IconButton>
                                         )}>
-                                        <ListItemText 
+                                        <ListItemText
                                             primary={
-                                                <Typography 
+                                                <Typography
                                                     variant="subtitle2" component="span" sx={{ fontWeight: 'bold', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
                                                     onClick={() => {
                                                         handleCloseModal();
@@ -501,15 +633,15 @@ function Search() {
                                                 >
                                                     {comment.NICKNAME || comment.USERID}
                                                 </Typography>
-                                            } 
-                                            secondary={<><Typography component="span" variant="body2" color="text.primary">{comment.CONTENT}</Typography><br /><Typography component="span" variant="caption" color="text.secondary">{new Date(comment.CDATE).toLocaleDateString()}</Typography></>} 
+                                            }
+                                            secondary={<><Typography component="span" variant="body2" color="text.primary">{comment.CONTENT}</Typography><br /><Typography component="span" variant="caption" color="text.secondary">{new Date(comment.CDATE).toLocaleDateString()}</Typography></>}
                                         />
                                     </ListItem>
                                 ))}
                             </List>
                         </DialogContent>
                         <DialogActions sx={{ p: 2 }}>
-                            <TextField fullWidth size="small" placeholder="댓글 달기..." ref={commentRef} InputProps={{ endAdornment: (<IconButton onClick={handleAddComment}><SendIcon color="primary" /></IconButton>) }} onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }} />
+                            <TextField fullWidth size="small" placeholder="댓글 달기..." inputRef={commentRef} InputProps={{ endAdornment: (<IconButton onClick={handleAddComment}><SendIcon color="primary" /></IconButton>) }} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }} />
                         </DialogActions>
                     </>
                 )}
@@ -519,4 +651,4 @@ function Search() {
     );
 }
 
-export default Search;  
+export default Search;

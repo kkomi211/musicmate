@@ -251,6 +251,29 @@ router.get("/like/:feedNo/:userId", async (req, res) => {
     }
 })
 
+router.delete("/:feedNo", async (req, res) => {
+    let { feedNo } = req.params;
+    try {
+        let sqlImg = "DELETE FROM FEED_IMG WHERE FEEDNO = ?"
+        let sqlComment = "DELETE FROM FEED_COMMENT WHERE FEEDNO = ?"
+        let sqlLike = "DELETE FROM FEED_LIKE WHERE FEEDNO = ?"
+        let sqlBookmark = "DELETE FROM BOOKMARK WHERE FEEDNO = ?"
+        let sql = "DELETE FROM FEED WHERE FEEDNO = ?";
+
+        let result2 = await db.query(sqlImg, [feedNo]);
+        let result3 = await db.query(sqlComment, [feedNo]);
+        let result4 = await db.query(sqlLike, [feedNo]);
+        let result5 = await db.query(sqlBookmark, [feedNo]);
+        let result1 = await db.query(sql, [feedNo]);
+        return (res.json({
+            result: "success"
+        }))
+    } catch (error) {
+        console.log(error);
+
+    }
+})
+
 router.get("/bookmark/:feedNo/:userId", async (req, res) => {
 
     let { feedNo, userId } = req.params;
@@ -307,18 +330,39 @@ router.get("/comment/:feedNo", async (req, res) => {
 router.post("/comment", async (req, res) => {
     let { feedNo, userId, content } = req.body;
     try {
+        // 1. 댓글 작성 (FEED_COMMENT 테이블)
         let sql = "INSERT INTO FEED_COMMENT(FEEDNO, CONTENT, USERID, CDATE, UDATE) VALUES(?, ?, ?, NOW(), NOW())";
         let result = await db.query(sql, [feedNo, content, userId]);
 
+        // 2. 알림 추가 (ALERT 테이블)
+        // 2-1. 먼저 피드 작성자(주인)의 ID를 찾습니다.
+        let findOwnerSql = "SELECT USERID FROM FEED WHERE FEEDNO = ?";
+        let [ownerRows] = await db.query(findOwnerSql, [feedNo]);
+
+        if (ownerRows.length > 0) {
+            let ownerId = ownerRows[0].USERID;
+
+            // 2-2. 본인이 본인 글에 댓글을 단 경우가 아닐 때만 알림 추가
+            if (ownerId !== userId) {
+                let alertSql = `
+                    INSERT INTO ALERT (USERID, STATUS, CDATE, KIND, FEEDNO, SENDERID) 
+                    VALUES (?, 'N', NOW(), 'F', ?, ?)
+                `;
+                // 파라미터: [받는사람ID(피드주인), 피드번호, 보낸사람ID(댓글작성자)]
+                await db.query(alertSql, [ownerId, feedNo, userId]);
+            }
+        }
+
         res.json({
             result: result,
+            result2: "success",
             msg: "댓글 작성 성공"
-        })
+        });
     } catch (error) {
-        console.log(error);
-
+        console.error("댓글 작성 중 오류:", error);
+        res.status(500).json({ result: "fail", msg: "서버 오류" });
     }
-})
+});
 
 router.delete("/comment/:commentNo", async (req, res) => {
     let { commentNo } = req.params;
@@ -328,6 +372,7 @@ router.delete("/comment/:commentNo", async (req, res) => {
 
         res.json({
             result: result,
+            result2: "success",
             msg: "댓글 삭제 성공"
         })
     } catch (error) {
@@ -344,13 +389,21 @@ router.get("/:userId/:feedCount", async (req, res) => {
         let sql = `
             SELECT 
                 F.*, 
-                ANY_VALUE(U.NICKNAME) AS NICKNAME, -- [추가] 닉네임 가져오기
-                ANY_VALUE(I.IMGPATH) AS IMGPATH, 
+                ANY_VALUE(U.NICKNAME) AS NICKNAME,
+                
+                -- [추가됨] 작성자 프로필 이미지 (USER_IMGPATH)
+                (SELECT IMGPATH 
+                 FROM FEED_IMG 
+                 WHERE USERID = F.USERID AND IMGTYPE = 'P' 
+                 ORDER BY CDATE DESC LIMIT 1) AS USER_IMGPATH,
+
+                ANY_VALUE(I.IMGPATH) AS IMGPATH, -- 피드 메인 이미지
+                
                 COUNT(DISTINCT L.LIKENO) AS LIKE_COUNT,
                 COUNT(DISTINCT CASE WHEN L.USERID = ? THEN 1 END) AS MY_LIKE,
                 COUNT(DISTINCT B.BOOKMARKNO) AS MY_BOOKMARK 
             FROM FEED F 
-            LEFT JOIN USER U ON F.USERID = U.USERID -- [추가] 유저 테이블 조인
+            LEFT JOIN USER U ON F.USERID = U.USERID 
             LEFT JOIN FEED_IMG I ON F.FEEDNO = I.FEEDNO AND I.IMGTYPE = 'M' 
             LEFT JOIN FEED_LIKE L ON F.FEEDNO = L.FEEDNO 
             LEFT JOIN BOOKMARK B ON F.FEEDNO = B.FEEDNO AND B.USERID = ?
@@ -363,7 +416,7 @@ router.get("/:userId/:feedCount", async (req, res) => {
             LIMIT ? OFFSET 0
         `;
 
-        // 파라미터 순서: [MY_LIKE용 userId, MY_BOOKMARK용 userId, WHERE절 userId, SUBQUERY userId, LIMIT 숫자]
+        // 파라미터 순서: [MY_LIKE용, MY_BOOKMARK용, WHERE절(본인), 팔로우서브쿼리, LIMIT]
         let [list] = await db.query(sql, [userId, userId, userId, userId, limit]);
 
         res.json({ list: list, result: "success" });
@@ -513,16 +566,14 @@ router.post("/search", async (req, res) => {
     // req.body에서 검색 파라미터를 읽어옵니다.
     const { q: searchTerm, type: searchType, userId: myUserId } = req.body;
 
-    // console.log("실행"); // 디버깅 로그는 필요시 주석 해제
-
     // 안전을 위해 검색어를 대소문자 구분 없이 사용할 수 있도록 처리
     const searchPattern = `%${searchTerm}%`;
 
     let results = { users: [], feeds: [] };
 
     try {
+        // 1. 사용자 검색 (기존 유지)
         if (searchType === 'user' || searchType === 'all') {
-            // --- 사용자 검색 (USERID 및 NICKNAME 동시 검색) ---
             let userSql = `
                 SELECT 
                     U.USERID, 
@@ -539,15 +590,37 @@ router.post("/search", async (req, res) => {
             results.users = userList;
         }
 
+        // 2. 피드 검색 (수정됨: MY_BOOKMARK 추가)
         if (searchType === 'feed' || searchType === 'all') {
-            // --- 피드 검색 (CONTENT 검색) ---
             let feedSql = `
                 SELECT 
-                    F.FEEDNO, F.CONTENT, F.CDATE, F.USERID,
+                    F.FEEDNO, 
+                    F.CONTENT, 
+                    F.CDATE, 
+                    F.USERID,
                     ANY_VALUE(U.NICKNAME) AS NICKNAME,
-                    (SELECT IMGPATH FROM FEED_IMG WHERE FEEDNO = F.FEEDNO AND IMGTYPE = 'M' LIMIT 1) AS IMGPATH,
+                    
+                    -- [이미지 1] 피드 메인 이미지
+                    (SELECT IMGPATH 
+                     FROM FEED_IMG 
+                     WHERE FEEDNO = F.FEEDNO AND IMGTYPE = 'M' 
+                     LIMIT 1) AS IMGPATH,
+
+                    -- [이미지 2] 작성자 프로필 이미지
+                    (SELECT IMGPATH 
+                     FROM FEED_IMG 
+                     WHERE USERID = F.USERID AND IMGTYPE = 'P' 
+                     ORDER BY CDATE DESC LIMIT 1) AS USER_IMGPATH,
+
+                    -- [카운트] 좋아요 수
                     COUNT(DISTINCT L.LIKENO) AS LIKE_COUNT,
-                    COUNT(DISTINCT CASE WHEN L.USERID = ? THEN 1 END) AS MY_LIKE
+                    
+                    -- [상태 1] 내가 좋아요 눌렀는지 (1이면 true, 0이면 false)
+                    COUNT(DISTINCT CASE WHEN L.USERID = ? THEN 1 END) AS MY_LIKE,
+
+                    -- [상태 2] 내가 북마크 했는지 (추가됨)
+                    (SELECT COUNT(*) FROM BOOKMARK WHERE FEEDNO = F.FEEDNO AND USERID = ?) AS MY_BOOKMARK
+
                 FROM FEED F
                 INNER JOIN USER U ON F.USERID = U.USERID
                 LEFT JOIN FEED_LIKE L ON F.FEEDNO = L.FEEDNO
@@ -556,8 +629,10 @@ router.post("/search", async (req, res) => {
                 ORDER BY F.CDATE DESC
                 LIMIT 10
             `;
-            // NOTE: 피드 검색 시 내가 좋아요 눌렀는지 확인하기 위해 myUserId 필요
-            let [feedList] = await db.query(feedSql, [myUserId, searchPattern]);
+            
+            // 파라미터 순서: [좋아요체크용ID, 북마크체크용ID, 검색어]
+            // myUserId가 두 번 들어가는 것에 주의하세요!
+            let [feedList] = await db.query(feedSql, [myUserId, myUserId, searchPattern]);
             results.feeds = feedList;
         }
 
@@ -568,7 +643,7 @@ router.post("/search", async (req, res) => {
         console.error("통합 검색 오류:", error);
         res.status(500).json({ result: "fail", msg: "Server Error" });
     }
-});
+}); 
 
 router.post("/", async (req, res) => {
     console.log(req.body);
