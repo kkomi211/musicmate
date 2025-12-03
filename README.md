@@ -1,218 +1,95 @@
-🎸 MUSICMATE: 종합 음악인을 위한 SNS 및 마켓플레이스 플랫폼
+🎸 MUSICMATE
+종합 음악인을 위한 SNS & 마켓플레이스 플랫폼
+🌟 프로젝트 소개
 
-🌟 프로젝트 개요
-
-MUSICMATE는 음악을 사랑하는 사람들이 서로 소통하고, 밴드 멤버를 모집하며, 악기 및 악보를 거래할 수 있도록 설계된 종합 소셜/마켓플레이스 플랫폼입니다. React와 Node.js (Express, MySQL) 환경을 기반으로 구축되었으며, 모바일 최적화된 UX를 제공합니다.
+MUSICMATE는 음악을 사랑하는 사람들이 서로 소통하고, 밴드 멤버를 모집하며, 악기/악보를 거래할 수 있는 올인원 소셜 + 마켓플레이스 플랫폼입니다.
+React / Node.js / MySQL 기반으로 제작되었으며, 모바일 UX에 최적화되어 있습니다.
 
 ✨ 주요 기능
-
-분류
-
-기능
-
-설명
-
-소셜/피드
-
-통합 피드
-
-내 게시글 및 팔로우한 사용자의 게시글을 최신순으로 조회 (무한 스크롤 구현)
-
-
-
-개인 피드
-
-특정 사용자(본인/타인)의 프로필 정보 및 작성 글만 조회
-
-
-
-상호 작용
-
-좋아요, 북마크, 댓글 작성 및 삭제, 닉네임 클릭 시 개인 피드 이동
-
-
-
-검색
-
-검색어와 조건(사용자, 피드)에 따라 통합 검색 결과 제공
-
-마이페이지
-
-정보 조회/수정
-
-사용자 아이디, 닉네임, 사용 악기 등 정보 조회 및 비밀번호 변경 (테이블 형식)
-
-거래/모집
-
-중고 장터
-
-악기/악보/기타 거래 목록을 그리드 형태로 제공 (카테고리, 내 글 보기, 더보기 필터링)
-
-
-
-거래 상세
-
-상품 이미지 슬라이드, 판매 상태(판매 중/완료) 토글, 판매글 삭제 기능 (본인 작성 글에 한함)
-
-
-
-밴드 모집
-
-밴드 멤버 모집글 목록 제공 (모집 파트, D-Day, 상태 필터링 포함)
-
-커뮤니케이션
-
-메시지 (DM)
-
-1:1 채팅방 진입 및 메시지 송수신 (목록 조회 및 채팅방 구현)
-
-
-
-합주실 찾기
-
-카카오맵 API를 활용한 지도 기반 합주실 위치 검색 및 마커 표시
-
-🛠️ 기술 스택
-
-클라이언트 (Frontend)
+🔹 소셜 & 피드 기능
+기능	설명
+통합 피드	내 글 + 팔로우한 사용자 글 최신순 조회 (무한스크롤)
+개인 피드	특정 사용자의 프로필 + 게시글만 조회
+상호작용	좋아요, 북마크, 댓글, 닉네임 클릭하여 개인 피드 이동
+검색	사용자 / 피드 통합 검색
+🔹 마이페이지 기능
+기능	설명
+정보 조회/수정	아이디, 닉네임, 악기, 비밀번호 변경
+프로필 사진 수정	이미지 업로드 및 변경
+🔹 거래 / 밴드 모집 기능
+기능	설명
+중고 장터	악기/악보 거래, 카테고리 필터, 내 글 보기
+거래 상세	이미지 슬라이드, 판매 상태 변경, 삭제(본인 글만)
+밴드 모집	모집 파트, D-DAY, 모집 상태 필터링
+🔹 커뮤니케이션 기능
+기능	설명
+DM (1:1 메시지)	실시간 채팅, 목록 조회, 채팅방 이동
+합주실 찾기	카카오맵 기반 합주실 위치 검색 및 마커 표시
+🛠 기술 스택
+Frontend
 
 React (SPA, Hooks)
 
-Material UI (MUI): 반응형 및 컴포넌트 디자인
+Material UI (MUI)
 
-Axios / Fetch API: 서버 통신
+Axios / Fetch API
 
-react-router-dom: 페이지 라우팅
+react-router-dom
 
-카카오맵 SDK: 합주실 위치 지도 연동
+Kakao Map SDK (지도)
 
-다음 우편번호 API: 주소 검색
+Daum Postcode API (주소 검색)
 
-서버 (Backend) & 데이터베이스
+Backend
 
-Node.js & Express: RESTful API 구축
+Node.js + Express
 
-MySQL: 관계형 데이터베이스
+MySQL
 
-bcrypt: 비밀번호 단방향 암호화
+bcrypt (비밀번호 암호화)
 
-jsonwebtoken (JWT): 사용자 인증 및 토큰 발급
+JWT (토큰 인증)
 
-Multer: 파일 업로드 처리
+Multer (파일 업로드)
 
-⚙️ 서버 및 API 엔드포인트
+⚙️ 서버 API 엔드포인트 (Feed Router 기준)
+분류	메소드	엔드포인트	요청 데이터	설명
+통합 검색	POST	/feed/search	q, type, userId	통합 검색 (사용자/피드)
+피드 목록	GET	/feed/:userId/:feedCount	Params	메인 피드 조회
+개인 피드	GET	/feed/personal/:userId/:feedCount	Params	특정 사용자 게시글
+프로필 정보	POST	/feed/personal/:userId	Params	프로필 + 통계
+프로필 수정	PUT	/feed/user/update	FormData	닉네임, 악기, 프로필 이미지 업데이트
+좋아요	GET	/feed/like/:feedNo/:userId	Params	좋아요 토글
+북마크	GET	/feed/bookmark/:feedNo/:userId	Params	북마크 토글
+북마크 목록	GET	/feed/bookmark/list/:userId/:feedCount	Params	북마크 목록 조회
+팔로우 확인	GET	/feed/checkFollow/:myId/:targetId	Params	팔로우 여부 조회
+팔로우 토글	POST	/feed/follow	myId, targetId	팔로우/언팔로우
+댓글 조회	GET	/feed/comment/:feedNo	Params	댓글 조회
+댓글 등록	POST	/feed/comment	feedNo, userId, content	댓글 작성
+댓글 삭제	DELETE	/feed/comment/:commentNo	Params	댓글 삭제
+🚀 설치 및 실행 방법
+1️⃣ MySQL & 환경 설정
 
-기능
+USER, FEED, FEED_IMG, FOLLOW, BOOKMARK, EVENT, BAND_BOARD, BAND_IMG,
+ENSEMBLE_ROOM, MESSAGE, CHAT_ROOM, CHAT_MESSAGE, ALERT 테이블 생성
+(스키마는 프로젝트 파일 참고)
 
-메소드
+Kakao Map API 키 등록
 
-엔드포인트 예시
+<!-- public/index.html의 <head> 안에 추가 -->
+<script type="text/javascript" 
+src="//dapi.kakao.com/v2/maps/sdk.js?appkey=발급받은_JavaScript_키&libraries=services"></script>
 
-설명
-
-통합 검색
-
-POST
-
-/feed/search
-
-피드 또는 사용자 검색 (q, type in Body)
-
-피드 목록
-
-GET
-
-/feed/:userId/:count
-
-메인 피드 및 팔로우한 사용자 글 조회
-
-개인 피드
-
-GET
-
-/feed/personal/:userId/:count
-
-특정 사용자의 글만 조회
-
-댓글 등록
-
-POST
-
-/feed/comment
-
-댓글 작성 및 등록
-
-좋아요/북마크
-
-GET
-
-/feed/like/:feedNo/:userId
-
-좋아요 토글
-
-북마크 목록
-
-GET
-
-/feed/bookmark/list/:userId/:count
-
-사용자가 북마크한 글 목록 조회
-
-프로필 업데이트
-
-PUT
-
-/feed/user/update
-
-프로필 정보 및 사진 수정 (Multipart/Form-Data)
-
-합주실 등록
-
-POST
-
-/ensemble/add
-
-합주실 정보 등록
-
-합주실 목록
-
-GET
-
-/ensemble/list
-
-등록된 합주실 목록 조회 (주소->좌표 변환 포함)
-
-🚀 설치 및 실행 방법 (로컬 환경)
-
-1. 환경 설정 및 DB 준비
-
-MySQL DB 설정: USER, FEED, FEED_IMG, FOLLOW, BOOKMARK, EVENT, BAND_BOARD, BAND_IMG, ENSEMBLE_ROOM, MESSAGE, CHAT_ROOM, CHAT_MESSAGE, ALERT 테이블을 생성합니다. (스키마는 프로젝트 파일 참고)
-
-카카오맵 API 키 설정: public/index.html 파일에 JavaScript 키를 등록합니다.
-
-2. 서버 실행 (Node.js)
-
+2️⃣ 서버 실행 (Node.js)
 # 1. 의존성 설치
 npm install express mysql bcrypt jsonwebtoken multer
 
-# 2. 서버 파일 실행 (예시: server.js 또는 app.js)
+# 2. 서버 실행
 node server.js
 
-
-3. 클라이언트 실행 (React)
-
-# 1. React 환경 설정 (CRA 또는 Vite)
-# 2. 필요한 React 라이브러리 설치 (MUI, react-router-dom 등)
+3️⃣ 클라이언트 실행 (React)
+# 1. React 라이브러리 설치
 npm install react-router-dom @mui/material @emotion/react @emotion/styled
 
-# 3. 개발 서버 실행
+# 2. 개발 서버 실행
 npm start
-
-
-📝 개발 참고 사항
-
-인증 처리: 모든 로그인/인증은 router.post('/login')에서 발급된 JWT 토큰 기반으로 관리됩니다.
-
-API Base URL: 클라이언트의 모든 fetch 요청은 현재 http://localhost:3010을 기준으로 합니다.
-
-클라이언트 측 필터링: Band.js, Deal.js, Event.js 목록 페이지는 서버에서 전체 데이터를 받은 후 클라이언트 측에서 필터링 및 페이지네이션(더보기)을 처리합니다.
