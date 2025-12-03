@@ -57,9 +57,9 @@ MUSICMATE는 음악을 사랑하는 사람들이 서로 소통하고, 밴드 멤
 | **댓글 삭제** | `DELETE` | `/feed/comment/:commentNo` | (Params) | 특정 댓글 삭제 |
 
 
-🚀 설치 및 실행 방법 (로컬 환경)
+## 🚀 설치 및 실행 방법 (로컬 환경)
 
-1. 환경 설정 및 DB 준비
+# 1. 환경 설정 및 DB 준비
 
 MySQL DB 설정: USER, FEED, FEED_IMG, FOLLOW, BOOKMARK, EVENT, BAND_BOARD, BAND_IMG, ENSEMBLE_ROOM, MESSAGE, CHAT_ROOM, CHAT_MESSAGE, ALERT 테이블을 생성합니다. (스키마는 프로젝트 파일 참고)
 
@@ -69,19 +69,19 @@ MySQL DB 설정: USER, FEED, FEED_IMG, FOLLOW, BOOKMARK, EVENT, BAND_BOARD, BAND
 <script type="text/javascript" src="//[dapi.kakao.com/v2/maps/sdk.js?appkey=발급받은_JavaScript_키&libraries=services](https://dapi.kakao.com/v2/maps/sdk.js?appkey=발급받은_JavaScript_키&libraries=services)"></script>
 
 
-2. 서버 실행 (Node.js)
+# 2. 서버 실행 (Node.js)
 
-# 1. 의존성 설치
+### 1. 의존성 설치
 npm install express mysql bcrypt jsonwebtoken multer
 
-# 2. 서버 파일 실행 (예시: server.js 또는 app.js)
+### 2. 서버 파일 실행 (예시: server.js 또는 app.js)
 node server.js
 
 
-3. 클라이언트 실행 (React)
+# 3. 클라이언트 실행 (React)
 
-# 1. 필요한 React 라이브러리 설치
+### 1. 필요한 React 라이브러리 설치
 npm install react-router-dom @mui/material @emotion/react @emotion/styled
 
-# 2. 개발 서버 실행
+### 2. 개발 서버 실행
 npm start 
