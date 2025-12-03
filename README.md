@@ -85,3 +85,42 @@ npm install react-router-dom @mui/material @emotion/react @emotion/styled
 
 ### 2. 개발 서버 실행
 npm start 
+
+
+
+## 주요 화면
+
+### 메인 화면
+<img width="1906" height="951" alt="image" src="https://github.com/user-attachments/assets/8767605a-dedc-4006-be8e-f72509c28149" />
+
+### 개인 피드 화면
+<img width="1902" height="955" alt="image" src="https://github.com/user-attachments/assets/e73c0d07-c62a-4d35-bfc5-9596b52c8ceb" />
+
+### 합주실 찾기 화면
+<img width="1874" height="896" alt="image" src="https://github.com/user-attachments/assets/516970e3-5526-4cfb-98a4-7e5b2b51e7b2" />
+
+### 악기/악보 거래 화면
+<img width="1889" height="948" alt="image" src="https://github.com/user-attachments/assets/ac81f91c-dfcb-4090-916a-b3ba21ca4190" />
+
+### 밴드 모집 화면
+<img width="1899" height="950" alt="image" src="https://github.com/user-attachments/assets/ce78ee3d-05fc-44f6-86b8-44650057343a" />
+
+### 이벤트 공지 화면
+<img width="1899" height="958" alt="image" src="https://github.com/user-attachments/assets/9e625341-11de-47d3-8cbe-f0af3a6536ed" />
+
+### 메시지 화면
+<img width="1896" height="956" alt="image" src="https://github.com/user-attachments/assets/848436ae-ce8b-44a0-ac7c-ea9e1b438601" />
+
+### 마이페이지 화면
+<img width="1896" height="953" alt="image" src="https://github.com/user-attachments/assets/1929dde1-c435-48c3-9b69-f38723891a6b" />
+
+### 알림 화면
+<img width="1899" height="868" alt="image" src="https://github.com/user-attachments/assets/85380af5-109e-446c-bf9d-7cbdffa41536" />
+
+
+
+
+
+
+
+
