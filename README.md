@@ -1,126 +1,96 @@
-# 🎸 MUSICMATE: 종합 음악인을 위한 SNS 및 마켓플레이스 플랫폼
+# 🎸 MUSICMATE (뮤직메이트)
+> **종합 음악인을 위한 올인원 소셜 & 마켓플레이스 플랫폼**
+
+![Generic badge](https://img.shields.io/badge/Version-1.0.0-blue.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ## 🌟 프로젝트 개요
+**MUSICMATE**는 음악을 사랑하는 사람들이 서로 소통하고, 밴드 멤버를 모집하며, 악기 및 악보를 거래할 수 있도록 설계된 플랫폼입니다.  
+React와 Node.js 환경을 기반으로 구축되었으며, 모바일 환경에 최적화된 사용자 경험(UX)을 제공합니다.
 
-MUSICMATE는 음악을 사랑하는 사람들이 서로 소통하고, 밴드 멤버를 모집하며, 악기 및 악보를 거래할 수 있도록 설계된 종합 소셜/마켓플레이스 플랫폼입니다. React와 Node.js (Express, MySQL) 환경을 기반으로 구축되었으며, 모바일 최적화된 UX를 제공합니다.
+---
 
-## ✨ 주요 기능
+## 🛠️ 기술 스택 (Tech Stack)
 
-|분류|내용|설명|
-|-----|-----|-----|
-|소셜/피드|통합 피드|내 게시글 및 팔로우한 사용자의 게시글을 최신순으로 조회 (무한 스크롤 구현)|
-||개인 피드|특정 사용자(본인/타인)의 프로필 정보 및 작성 글만 조회|
-||상호 작용|좋아요, 북마크, 댓글 작성 및 삭제, 닉네임 클릭 시 개인 피드 이동|
-||검색|검색어와 조건(사용자, 피드)에 따라 통합 검색 결과 제공|
-|마이페이지|정보 조회/수정|사용자 아이디, 닉네임, 사용 악기 등 정보 조회 및 비밀번호 변경 (테이블 형식)|
-|거래/모집|중고 장터|악기/악보/기타 거래 목록을 그리드 형태로 제공 (카테고리, 내 글 보기, 더보기 필터링)|
-||거래 상세|상품 이미지 슬라이드, 판매 상태(판매 중/완료) 토글, 판매글 삭제 기능 (본인 작성 글에 한함)|
-||밴드 모집|밴드 멤버 모집글 목록 제공 (모집 파트, D-Day, 상태 필터링 포함)|
-|커뮤니케이션|메시지 (DM)|1:1 채팅방 진입 및 메시지 송수신 (목록 조회 및 채팅방 구현)|
-||합주실 찾기|카카오맵 API를 활용한 지도 기반 합주실 위치 검색 및 마커 표시|
+### Frontend
+![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
+![MUI](https://img.shields.io/badge/MUI-%230081CB.svg?style=flat&logo=mui&logoColor=white)
+![Axios](https://img.shields.io/badge/Axios-5A29E4?style=flat&logo=axios&logoColor=white)
+![KakaoMap](https://img.shields.io/badge/KakaoMap-FFCD00?style=flat&logo=kakao&logoColor=black)
 
-## 🛠️ 기술 스택
+### Backend & Database
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=flat&logo=express&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-00000F?style=flat&logo=mysql&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-black?style=flat&logo=JSON%20web%20tokens)
 
-### 클라이언트 (Frontend)
+---
 
-* React (SPA, Hooks)
-* Material UI (MUI): 반응형 및 컴포넌트 디자인
-* Axios / Fetch API: 서버 통신
-* react-router-dom: 페이지 라우팅
-* 카카오맵 SDK: 합주실 위치 지도 연동
-* 다음 우편번호 API: 주소 검색
+## ✨ 주요 기능 (Key Features)
 
-### 서버 (Backend) & 데이터베이스
+### 📱 소셜 네트워크 (Social & Feed)
+* **통합 피드**: 내 게시글 및 팔로우한 유저의 소식을 최신순 무한 스크롤로 제공
+* **개인 피드**: 특정 유저의 프로필 및 히스토리 조회
+* **상호 작용**: 좋아요, 북마크, 댓글, 태그 기능
+* **스마트 검색**: 유저 닉네임, 피드 내용 기반 통합 검색 지원
 
-* Node.js & Express: RESTful API 구축
-* MySQL: 관계형 데이터베이스
-* bcrypt: 비밀번호 단방향 암호화
-* jsonwebtoken (JWT): 사용자 인증 및 토큰 발급
-* Multer: 파일 업로드 처리
+### 🛍️ 마켓플레이스 & 구인 (Market & Recruit)
+* **중고 장터**: 악기, 악보 등 음악 관련 물품 거래 (판매 상태 관리 기능 포함)
+* **밴드 모집**: 원하는 파트, D-Day 설정을 통한 효율적인 밴드 멤버 모집
+* **필터링**: 카테고리별, 판매/모집 상태별 보기 제공
 
-## ⚙️ 서버 및 API 엔드포인트 (Feed 라우터 기준)
+### 💬 커뮤니케이션 & 유틸리티
+* **실시간 메시지(DM)**: 1:1 채팅방 생성 및 대화
+* **합주실 찾기**: 카카오맵 API 연동을 통한 내 주변 합주실 위치 및 정보 제공
+* **마이페이지**: 개인 정보 관리, 비밀번호 변경, 활동 내역 조회
 
-| 기능 분류 | 메소드 | 엔드포인트 | 요청 데이터 (Body) | 설명 | 
-| :--- | :--- | :--- | :--- | :--- |
-| **통합 검색** | `POST` | `/feed/search` | `q`, `type` (user/feed), `userId` | 사용자(ID/닉네임) 또는 피드(내용) 검색 결과 조회 |
-| **피드 목록** | `GET` | `/feed/:userId/:feedCount` | (Params) | 메인 피드 (내 글 + 팔로잉 글) 목록 조회 |
-| **개인 피드** | `GET` | `/feed/personal/:userId/:feedCount` | (Params) | 특정 사용자의 글만 조회 |
-| **프로필 정보** | `POST` | `/feed/personal/:userId` | (Params) | 유저 상세 정보 및 통계 조회 (게시물 수, 팔로워 등) |
-| **프로필 수정** | `PUT` | `/feed/user/update` | `userId`, `nickname`, `instrument`, `file` (FormData) | 닉네임, 악기 정보 및 프로필 사진 업데이트 |
-| **좋아요 토글** | `GET` | `/feed/like/:feedNo/:userId` | (Params) | 게시글에 좋아요 설정 또는 해제 |
-| **북마크 토글** | `GET` | `/feed/bookmark/:feedNo/:userId` | (Params) | 게시글에 북마크 설정 또는 해제 |
-| **북마크 목록** | `GET` | `/feed/bookmark/list/:userId/:feedCount` | (Params) | 사용자가 북마크한 피드 목록 조회 |
-| **팔로우 상태 확인** | `GET` | `/feed/checkFollow/:myId/:targetId` | (Params) | 특정 사용자의 팔로우 상태 확인 |
-| **팔로우 토글** | `POST` | `/feed/follow` | `myId`, `targetId` | 팔로우/언팔로우 처리 |
-| **댓글 조회** | `GET` | `/feed/comment/:feedNo` | (Params) | 특정 피드의 댓글 및 이미지 목록 조회 |
-| **댓글 등록** | `POST` | `/feed/comment` | `feedNo`, `userId`, `content` | 댓글을 작성하고 DB에 저장 |
-| **댓글 삭제** | `DELETE` | `/feed/comment/:commentNo` | (Params) | 특정 댓글 삭제 |
+---
 
+## 📸 주요 화면 (Screen Shots)
 
-## 🚀 설치 및 실행 방법 (로컬 환경)
+| 메인 피드 | 개인 피드 |
+| :---: | :---: |
+| <img src="https://github.com/user-attachments/assets/8767605a-dedc-4006-be8e-f72509c28149" width="100%"> | <img src="https://github.com/user-attachments/assets/e73c0d07-c62a-4d35-bfc5-9596b52c8ceb" width="100%"> |
 
-# 1. 환경 설정 및 DB 준비
+| 합주실 찾기 (Map) | 악기 거래 (Market) |
+| :---: | :---: |
+| <img src="https://github.com/user-attachments/assets/516970e3-5526-4cfb-98a4-7e5b2b51e7b2" width="100%"> | <img src="https://github.com/user-attachments/assets/ac81f91c-dfcb-4090-916a-b3ba21ca4190" width="100%"> |
 
-MySQL DB 설정: USER, FEED, FEED_IMG, FOLLOW, BOOKMARK, EVENT, BAND_BOARD, BAND_IMG, ENSEMBLE_ROOM, MESSAGE, CHAT_ROOM, CHAT_MESSAGE, ALERT 테이블을 생성합니다. (스키마는 프로젝트 파일 참고)
+| 밴드 모집 | 이벤트 공지 |
+| :---: | :---: |
+| <img src="https://github.com/user-attachments/assets/ce78ee3d-05fc-44f6-86b8-44650057343a" width="100%"> | <img src="https://github.com/user-attachments/assets/9e625341-11de-47d3-8cbe-f0af3a6536ed" width="100%"> |
 
-카카오맵 API 키 설정: public/index.html 파일에 JavaScript 키를 등록합니다.
+| 1:1 메시지 | 마이 페이지 |
+| :---: | :---: |
+| <img src="https://github.com/user-attachments/assets/848436ae-ce8b-44a0-ac7c-ea9e1b438601" width="100%"> | <img src="https://github.com/user-attachments/assets/1929dde1-c435-48c3-9b69-f38723891a6b" width="100%"> |
 
-<!-- public/index.html의 <head> 태그 안에 추가 -->
-<script type="text/javascript" src="//[dapi.kakao.com/v2/maps/sdk.js?appkey=발급받은_JavaScript_키&libraries=services](https://dapi.kakao.com/v2/maps/sdk.js?appkey=발급받은_JavaScript_키&libraries=services)"></script>
+---
 
+## ⚙️ API Reference
 
-# 2. 서버 실행 (Node.js)
+### Feed Router Endpoints
 
-### 1. 의존성 설치
-npm install express mysql bcrypt jsonwebtoken multer
+| Method | Endpoint | Description | Body / Params |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/feed/search` | 통합 검색 | `q`, `type`, `userId` |
+| `GET` | `/feed/:userId/:feedCount` | 메인 피드 조회 | `userId`, `feedCount` |
+| `GET` | `/feed/personal/:userId/:feedCount` | 개인 피드 조회 | `userId`, `feedCount` |
+| `POST` | `/feed/personal/:userId` | 프로필 정보 조회 | `userId` |
+| `PUT` | `/feed/user/update` | 프로필 수정 | `FormData` (img, data) |
+| `GET` | `/feed/like/:feedNo/:userId` | 좋아요 토글 | `feedNo`, `userId` |
+| `POST` | `/feed/comment` | 댓글 등록 | `feedNo`, `userId`, `content` |
 
-### 2. 서버 파일 실행 (예시: server.js 또는 app.js)
-node server.js
+*(Note: 위 목록은 Feed 관련 주요 API이며, 전체 API 문서는 프로젝트 내부 문서를 참고하세요.)*
 
+---
 
-# 3. 클라이언트 실행 (React)
+## 🚀 설치 및 실행 방법 (Getting Started)
 
-### 1. 필요한 React 라이브러리 설치
-npm install react-router-dom @mui/material @emotion/react @emotion/styled
+### 1. 환경 설정 (Prerequisites)
+프로젝트 실행을 위해 `MySQL` 데이터베이스와 `Kakao Map API Key`가 필요합니다.
 
-### 2. 개발 서버 실행
-npm start 
+**Database Setup** `USER`, `FEED`, `FEED_IMG`, `FOLLOW`, `BOOKMARK`, `EVENT`, `BAND_BOARD`, `MESSAGE` 등의 테이블을 생성합니다. (상세 스키마는 `schema.sql` 참고)
 
-
-
-## 주요 화면
-
-### 메인 화면
-<img width="1906" height="951" alt="image" src="https://github.com/user-attachments/assets/8767605a-dedc-4006-be8e-f72509c28149" />
-
-### 개인 피드 화면
-<img width="1902" height="955" alt="image" src="https://github.com/user-attachments/assets/e73c0d07-c62a-4d35-bfc5-9596b52c8ceb" />
-
-### 합주실 찾기 화면
-<img width="1874" height="896" alt="image" src="https://github.com/user-attachments/assets/516970e3-5526-4cfb-98a4-7e5b2b51e7b2" />
-
-### 악기/악보 거래 화면
-<img width="1889" height="948" alt="image" src="https://github.com/user-attachments/assets/ac81f91c-dfcb-4090-916a-b3ba21ca4190" />
-
-### 밴드 모집 화면
-<img width="1899" height="950" alt="image" src="https://github.com/user-attachments/assets/ce78ee3d-05fc-44f6-86b8-44650057343a" />
-
-### 이벤트 공지 화면
-<img width="1899" height="958" alt="image" src="https://github.com/user-attachments/assets/9e625341-11de-47d3-8cbe-f0af3a6536ed" />
-
-### 메시지 화면
-<img width="1896" height="956" alt="image" src="https://github.com/user-attachments/assets/848436ae-ce8b-44a0-ac7c-ea9e1b438601" />
-
-### 마이페이지 화면
-<img width="1896" height="953" alt="image" src="https://github.com/user-attachments/assets/1929dde1-c435-48c3-9b69-f38723891a6b" />
-
-### 알림 화면
-<img width="1899" height="868" alt="image" src="https://github.com/user-attachments/assets/85380af5-109e-446c-bf9d-7cbdffa41536" />
-
-
-
-
-
-
-
-
+**Kakao Map API Setup** `public/index.html` 파일 `<head>` 태그 내에 발급받은 키를 입력하세요.
+```html
+<script type="text/javascript" src="//[dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_APP_KEY&libraries=services](https://dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_APP_KEY&libraries=services)"></script>
