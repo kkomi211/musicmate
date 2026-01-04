@@ -1,8 +1,7 @@
 # 🎸 MUSICMATE (뮤직메이트)
 > **종합 음악인을 위한 올인원 소셜 & 마켓플레이스 플랫폼**
 
-![Generic badge](https://img.shields.io/badge/Version-1.0.0-blue.svg)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 
 ## 🌟 프로젝트 개요
 **MUSICMATE**는 음악을 사랑하는 사람들이 서로 소통하고, 밴드 멤버를 모집하며, 악기 및 악보를 거래할 수 있도록 설계된 플랫폼입니다.  
