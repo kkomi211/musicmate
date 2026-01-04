@@ -47,21 +47,25 @@ React와 Node.js 환경을 기반으로 구축되었으며, 모바일 환경에 
 
 ## 📸 주요 화면 (Screen Shots)
 
-| 메인 피드 | 개인 피드 |
+| 메인 피드 & 소셜 | 개인 프로필 |
 | :---: | :---: |
 | <img src="https://github.com/user-attachments/assets/8767605a-dedc-4006-be8e-f72509c28149" width="100%"> | <img src="https://github.com/user-attachments/assets/e73c0d07-c62a-4d35-bfc5-9596b52c8ceb" width="100%"> |
+| **통합 피드 (Main Feed)**<br>내가 팔로우한 유저와 내 게시글을 최신순으로 보여줍니다. | **개인 피드 (Personal Feed)**<br>특정 유저의 프로필 정보와 게시물 히스토리를 조회합니다.<br>게시물 수, 팔로워/팔로잉 통계를 한눈에 볼 수 있습니다. |
 
-| 합주실 찾기 (Map) | 악기 거래 (Market) |
+| 합주실 찾기 | 악기/악보 마켓 |
 | :---: | :---: |
 | <img src="https://github.com/user-attachments/assets/516970e3-5526-4cfb-98a4-7e5b2b51e7b2" width="100%"> | <img src="https://github.com/user-attachments/assets/ac81f91c-dfcb-4090-916a-b3ba21ca4190" width="100%"> |
+| **지도 기반 검색 (Map)**<br>KakaoMap API를 활용해 내 주변 합주실을 탐색합니다.<br>마커 클릭 시 상세 정보를 확인할 수 있습니다. | **중고 거래 (Marketplace)**<br>악기 및 악보를 거래하는 장터입니다.<br>카테고리 필터 및 판매 상태(판매중/완료) 관리가 가능합니다. |
 
-| 밴드 모집 | 이벤트 공지 |
+| 밴드 멤버 모집 | 이벤트 & 공지 |
 | :---: | :---: |
 | <img src="https://github.com/user-attachments/assets/ce78ee3d-05fc-44f6-86b8-44650057343a" width="100%"> | <img src="https://github.com/user-attachments/assets/9e625341-11de-47d3-8cbe-f0af3a6536ed" width="100%"> |
+| **밴드 구인 (Recruiting)**<br>원하는 세션(파트)과 D-Day를 설정하여 멤버를 모집합니다.<br>모집 상태 필터링으로 현재 유효한 공고만 볼 수 있습니다. | **이벤트 (Events)**<br>플랫폼 내 공식 이벤트와 공지사항을 전달합니다.<br>사용자 참여를 유도하는 배너 형식의 UI를 제공합니다. |
 
-| 1:1 메시지 | 마이 페이지 |
+| 실시간 소통 | 개인 정보 관리 |
 | :---: | :---: |
 | <img src="https://github.com/user-attachments/assets/848436ae-ce8b-44a0-ac7c-ea9e1b438601" width="100%"> | <img src="https://github.com/user-attachments/assets/1929dde1-c435-48c3-9b69-f38723891a6b" width="100%"> |
+| **1:1 메시지 (DM)**<br>관심 있는 유저나 거래 대상과 실시간 채팅을 나눕니다.<br>채팅방 목록 관리 및 메시지 송수신 기능을 지원합니다. | **마이 페이지 (My Page)**<br>내 정보를 관리하고 비밀번호를 변경할 수 있습니다.<br>사용자 편의를 위해 직관적인 테이블 형태로 구성했습니다. |
 
 ---
 
