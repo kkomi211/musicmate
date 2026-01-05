@@ -5,7 +5,7 @@
 
 ## 🌟 프로젝트 개요
 **MUSICMATE**는 음악을 사랑하는 사람들이 서로 소통하고, 밴드 멤버를 모집하며, 악기 및 악보를 거래할 수 있도록 설계된 플랫폼입니다.  
-React와 Node.js 환경을 기반으로 구축되었으며, 모바일 환경에 최적화된 사용자 경험(UX)을 제공합니다.
+React와 Node.js 환경을 기반으로 구축되었습니다.
 
 ---
 
@@ -21,7 +21,6 @@ React와 Node.js 환경을 기반으로 구축되었으며, 모바일 환경에 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-000000?style=flat&logo=express&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-00000F?style=flat&logo=mysql&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-black?style=flat&logo=JSON%20web%20tokens)
 
 ---
 
@@ -67,33 +66,4 @@ React와 Node.js 환경을 기반으로 구축되었으며, 모바일 환경에 
 | <img src="https://github.com/user-attachments/assets/848436ae-ce8b-44a0-ac7c-ea9e1b438601" width="100%"> | <img src="https://github.com/user-attachments/assets/1929dde1-c435-48c3-9b69-f38723891a6b" width="100%"> |
 | **1:1 메시지 (DM)**<br>관심 있는 유저나 거래 대상과 실시간 채팅을 나눕니다.<br>채팅방 목록 관리 및 메시지 송수신 기능을 지원합니다. | **마이 페이지 (My Page)**<br>내 정보를 관리하고 비밀번호를 변경할 수 있습니다.<br>사용자 편의를 위해 직관적인 테이블 형태로 구성했습니다. |
 
----
 
-## ⚙️ API Reference
-
-### Feed Router Endpoints
-
-| Method | Endpoint | Description | Body / Params |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/feed/search` | 통합 검색 | `q`, `type`, `userId` |
-| `GET` | `/feed/:userId/:feedCount` | 메인 피드 조회 | `userId`, `feedCount` |
-| `GET` | `/feed/personal/:userId/:feedCount` | 개인 피드 조회 | `userId`, `feedCount` |
-| `POST` | `/feed/personal/:userId` | 프로필 정보 조회 | `userId` |
-| `PUT` | `/feed/user/update` | 프로필 수정 | `FormData` (img, data) |
-| `GET` | `/feed/like/:feedNo/:userId` | 좋아요 토글 | `feedNo`, `userId` |
-| `POST` | `/feed/comment` | 댓글 등록 | `feedNo`, `userId`, `content` |
-
-*(Note: 위 목록은 Feed 관련 주요 API이며, 전체 API 문서는 프로젝트 내부 문서를 참고하세요.)*
-
----
-
-## 🚀 설치 및 실행 방법 (Getting Started)
-
-### 1. 환경 설정 (Prerequisites)
-프로젝트 실행을 위해 `MySQL` 데이터베이스와 `Kakao Map API Key`가 필요합니다.
-
-**Database Setup** `USER`, `FEED`, `FEED_IMG`, `FOLLOW`, `BOOKMARK`, `EVENT`, `BAND_BOARD`, `MESSAGE` 등의 테이블을 생성합니다. (상세 스키마는 `schema.sql` 참고)
-
-**Kakao Map API Setup** `public/index.html` 파일 `<head>` 태그 내에 발급받은 키를 입력하세요.
-```html
-<script type="text/javascript" src="//[dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_APP_KEY&libraries=services](https://dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_APP_KEY&libraries=services)"></script>
