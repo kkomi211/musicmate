@@ -70,7 +70,7 @@ router.get("/unread/:userId", async (req, res) => {
     }
 });
 
-router.post("/join", async (req, res) => {
+router.post("/:userId", async (req, res) => {
     // [수정] phone 변수 추가
     let { userId, pwd, name, nickname, gender, instrument, addr, phone } = req.body;
     console.log("회원가입 요청 데이터:", req.body);
